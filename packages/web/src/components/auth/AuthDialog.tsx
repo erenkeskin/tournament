@@ -24,17 +24,19 @@ export function AuthDialog({ open, onClose }: { open: boolean; onClose: () => vo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-96 rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-        <h2 className="mb-4 text-lg font-bold">{mode === 'signin' ? 'Giriş Yap' : 'Kayıt Ol'}</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-pitch/80 backdrop-blur-sm animate-fade-in">
+      <div className="card w-96 border-border-light animate-slide-up">
+        <h2 className="mb-6 font-display text-2xl tracking-wide text-chalk">
+          {mode === 'signin' ? 'Giriş Yap' : 'Kayıt Ol'}
+        </h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {mode === 'signup' && (
             <input
               type="text"
               placeholder="Kullanıcı adı"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
+              className="input"
               required
             />
           )}
@@ -43,7 +45,7 @@ export function AuthDialog({ open, onClose }: { open: boolean; onClose: () => vo
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
+            className="input"
             required
           />
           <input
@@ -51,21 +53,20 @@ export function AuthDialog({ open, onClose }: { open: boolean; onClose: () => vo
             placeholder="Şifre"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
+            className="input"
             required
           />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <button
-            type="submit"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-black"
-          >
+          {error && (
+            <p className="rounded-lg bg-red-card/10 px-3 py-2 text-sm text-red-card">{error}</p>
+          )}
+          <button type="submit" className="btn-primary">
             {mode === 'signin' ? 'Giriş' : 'Kayıt'}
           </button>
         </form>
         <button
           type="button"
           onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-          className="mt-3 text-sm text-neutral-400 hover:text-accent"
+          className="btn-ghost mt-3 w-full"
         >
           {mode === 'signin' ? 'Hesabın yok mu? Kayıt ol' : 'Hesabın var mı? Giriş yap'}
         </button>

@@ -298,3 +298,31 @@ adminRoutes.post('/promote-admin', async (c) => {
   if (error) return c.json({ error: error.message }, 500);
   return c.json({ success: true });
 });
+
+// Approve tournament application
+adminRoutes.post('/applications/:id/approve', async (c) => {
+  const supabase = getSupabaseClient();
+  const profileId = c.req.param('id');
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ tournament_status: 'APPROVED' })
+    .eq('id', profileId);
+
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json({ success: true });
+});
+
+// Reject tournament application
+adminRoutes.post('/applications/:id/reject', async (c) => {
+  const supabase = getSupabaseClient();
+  const profileId = c.req.param('id');
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ tournament_status: 'REJECTED' })
+    .eq('id', profileId);
+
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json({ success: true });
+});

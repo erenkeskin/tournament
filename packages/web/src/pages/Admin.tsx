@@ -6,6 +6,8 @@ interface Player {
   username: string;
   selected_team: string | null;
   is_admin: boolean;
+  avatar_url: string | null;
+  tournament_status: string;
 }
 
 interface Match {
@@ -152,7 +154,79 @@ export function Admin() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Admin Kontrol Paneli</h1>
+      <h1 className="font-display text-3xl tracking-wide text-chalk">Admin Paneli</h1>
+
+      {/* Application Approvals */}
+      {players.filter((p) => p.tournament_status === 'PENDING').length > 0 && (
+        <div className="card border-gold/30">
+          <h2 className="mb-4 font-display text-xl tracking-wide text-gold">
+            Bekleyen Başvurular ({players.filter((p) => p.tournament_status === 'PENDING').length})
+          </h2>
+          <div className="space-y-2">
+            {players
+              .filter((p) => p.tournament_status === 'PENDING')
+              .map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between rounded-xl border border-border bg-surface/50 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">
+                      {p.avatar_url
+                        ? (
+                            {
+                              lion: '🦁',
+                              eagle: '🦅',
+                              wolf: '🐺',
+                              dragon: '🐉',
+                              shark: '🦈',
+                              tiger: '🐯',
+                              bull: '🐂',
+                              falcon: '🦅',
+                              panther: '🐆',
+                              gorilla: '🦍',
+                              cobra: '🐍',
+                              rhino: '🦏',
+                            } as Record<string, string>
+                          )[p.avatar_url] || '👤'
+                        : '👤'}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-chalk">{p.username}</p>
+                      <p className="text-xs text-chalk-muted">Başvurdu</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await apiFetch(`/api/admin/applications/${p.id}/approve`, {
+                          method: 'POST',
+                        });
+                        fetchPlayers();
+                      }}
+                      className="rounded-lg bg-grass/15 px-4 py-2 text-xs font-bold text-grass hover:bg-grass/25 transition-all"
+                    >
+                      Onayla
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await apiFetch(`/api/admin/applications/${p.id}/reject`, {
+                          method: 'POST',
+                        });
+                        fetchPlayers();
+                      }}
+                      className="rounded-lg bg-red-card/15 px-4 py-2 text-xs font-bold text-red-card hover:bg-red-card/25 transition-all"
+                    >
+                      Reddet
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {message && (
         <div className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm">

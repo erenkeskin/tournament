@@ -4,7 +4,14 @@ import { supabase } from '@/lib/supabase';
 
 interface AuthState {
   user: User | null;
-  profile: { id: string; username: string; is_admin: boolean } | null;
+  profile: {
+    id: string;
+    username: string;
+    is_admin: boolean;
+    avatar_url: string | null;
+    selected_team: string | null;
+    tournament_status: string;
+  } | null;
   loading: boolean;
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;

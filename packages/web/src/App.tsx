@@ -1,12 +1,15 @@
 import { Component, type ReactNode, useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthDialog } from './components/auth/AuthDialog';
 import { Layout } from './components/layout/Layout';
 import { Admin } from './pages/Admin';
+import { Apply } from './pages/Apply';
 import { Betting } from './pages/Betting';
 import { Dashboard } from './pages/Dashboard';
 import { Fixtures } from './pages/Fixtures';
+import { Landing } from './pages/Landing';
 import { LiveDraw } from './pages/LiveDraw';
+import { TournamentTree } from './pages/TournamentTree';
 import { useAuthStore } from './stores/auth';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -20,14 +23,11 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   render() {
     if (this.state.error) {
       return (
-        <div className="flex h-screen items-center justify-center bg-neutral-950 p-10">
-          <div className="max-w-lg rounded-xl border border-red-800 bg-red-900/20 p-6">
-            <h1 className="text-lg font-bold text-red-400">Bir hata oluştu</h1>
-            <pre className="mt-2 whitespace-pre-wrap text-sm text-red-300">
+        <div className="flex min-h-screen items-center justify-center bg-pitch p-10">
+          <div className="card max-w-lg border-red-card/30">
+            <h1 className="mb-2 font-display text-2xl text-red-card">Bir hata oluştu</h1>
+            <pre className="whitespace-pre-wrap text-sm text-chalk-muted">
               {this.state.error.message}
-            </pre>
-            <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-xs text-red-400/70">
-              {this.state.error.stack}
             </pre>
           </div>
         </div>
@@ -40,11 +40,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 function AppContent() {
   const { user, loading, initialize } = useAuthStore();
   const [authOpen, setAuthOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    initialize().catch((err: Error) => {
-      console.error('Auth init failed:', err);
-    });
+    initialize().catch((err: Error) => console.error('Auth init failed:', err));
   }, [initialize]);
 
   useEffect(() => {
@@ -54,27 +53,42 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-neutral-950">
-        <p className="text-neutral-400">Yükleniyor...</p>
+      <div className="flex min-h-screen items-center justify-center bg-pitch">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-chalk-muted/20 border-t-gold" />
+          <p className="text-sm text-chalk-muted">Yükleniyor...</p>
+        </div>
       </div>
     );
   }
 
+  const _isLanding =
+    location.pathname === '/' || location.pathname === '/tree' || location.pathname === '/fixtures';
+
   return (
     <>
       <AuthDialog open={authOpen} onClose={() => setAuthOpen(false)} />
-      {user && (
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="fixtures" element={<Fixtures />} />
-            <Route path="betting" element={<Betting />} />
-            <Route path="draw" element={<LiveDraw />} />
-            <Route path="admin" element={<Admin />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      )}
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route path="/tree" element={<TournamentTree />} />
+        <Route path="/fixtures" element={<Fixtures />} />
+
+        {/* Auth-required routes */}
+        {user && (
+          <>
+            <Route path="/apply" element={<Apply />} />
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/betting" element={<Betting />} />
+              <Route path="/draw" element={<LiveDraw />} />
+              <Route path="/admin" element={<Admin />} />
+            </Route>
+          </>
+        )}
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </>
   );
 }
