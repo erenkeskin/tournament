@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { getSupabaseClient } from '../db/client';
 import { settleBets } from '../services/betting-engine';
-import { validatePlayoffResult } from '../services/playoff-engine';
+import { calculateStandings, generateFixtures, sortStandings } from '../services/league-engine';
+import { generatePlayoffBracket, validatePlayoffResult } from '../services/playoff-engine';
 import { allocateTeam, getAvailableNations } from '../services/team-allocation';
 
 export const adminRoutes = new Hono();
@@ -195,4 +196,105 @@ adminRoutes.get('/audit', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500);
   return c.json(data);
+});
+
+// List all players
+adminRoutes.get('/players', async (c) => {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, selected_team, is_admin, created_at')
+    .order('created_at', { ascending: true });
+
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+// Generate league fixtures
+adminRoutes.post('/generate-fixtures', async (c) => {
+  const supabase = getSupabaseClient();
+  const body = await c.req.json();
+  const { playerIds } = body;
+
+  if (!playerIds || playerIds.length < 2) {
+    return c.json({ error: 'At least 2 players required' }, 400);
+  }
+
+  // Check for existing league matches
+  const { data: existing } = await supabase
+    .from('matches')
+    .select('id')
+    .eq('stage', 'LEAGUE')
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    return c.json({ error: 'League fixtures already exist. Delete existing matches first.' }, 400);
+  }
+
+  const fixtures = generateFixtures(playerIds);
+  const { data, error } = await supabase.from('matches').insert(fixtures).select();
+
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json({ matches: data, count: data.length }, 201);
+});
+
+// Generate playoff bracket
+adminRoutes.post('/generate-playoffs', async (c) => {
+  const supabase = getSupabaseClient();
+
+  // Get all league matches for standings
+  const { data: matches } = await supabase.from('matches').select('*').eq('stage', 'LEAGUE');
+
+  const { data: profiles } = await supabase.from('profiles').select('id, username, selected_team');
+
+  const playerNames: Record<string, string> = {};
+  const playerTeams: Record<string, string> = {};
+  for (const p of profiles || []) {
+    playerNames[p.id] = p.username;
+    playerTeams[p.id] = p.selected_team || '';
+  }
+
+  const standings = calculateStandings(matches || [], playerNames, playerTeams);
+  const sorted = sortStandings(standings, matches || []);
+  const top4 = sorted.slice(0, 4);
+
+  if (top4.length < 4) {
+    return c.json({ error: 'Not enough players for playoffs (need 4)' }, 400);
+  }
+
+  // Check for existing playoff matches
+  const { data: existingPlayoff } = await supabase
+    .from('matches')
+    .select('id')
+    .eq('stage', 'PLAYOFF')
+    .limit(1);
+
+  if (existingPlayoff && existingPlayoff.length > 0) {
+    return c.json({ error: 'Playoff matches already exist' }, 400);
+  }
+
+  const bracket = generatePlayoffBracket(top4);
+  const { data, error } = await supabase.from('matches').insert(bracket.semiFinals).select();
+
+  if (error) return c.json({ error: error.message }, 500);
+
+  return c.json(
+    {
+      matches: data,
+      top4: top4.map((r) => ({ playerId: r.playerId, username: r.username, points: r.points })),
+    },
+    201,
+  );
+});
+
+// Promote user to admin (admin only)
+adminRoutes.post('/promote-admin', async (c) => {
+  const supabase = getSupabaseClient();
+  const body = await c.req.json();
+  const { profileId } = body;
+
+  const { error } = await supabase.from('profiles').update({ is_admin: true }).eq('id', profileId);
+
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json({ success: true });
 });
