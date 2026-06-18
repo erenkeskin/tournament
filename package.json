@@ -1,0 +1,19 @@
+{
+  "name": "vig-fifa-tournament",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun --filter '*' dev",
+    "dev:api": "bun --filter @vig/api dev",
+    "dev:web": "bun --filter @vig/web dev",
+    "test": "bun --filter '*' test",
+    "lint": "bun biome check .",
+    "lint:fix": "bun biome check --apply .",
+    "format": "bun biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.0"
+  }
+}
