@@ -1,5 +1,6 @@
 import { Target, Timer, Trophy } from 'lucide-react';
 import { useEffect } from 'react';
+import { useRealtime } from '@/hooks/useRealtime';
 import { cn } from '@/lib/utils';
 import { useMatchStore } from '@/stores/matches';
 
@@ -10,6 +11,11 @@ export function Dashboard() {
     fetchStandings();
     fetchMatches();
   }, [fetchStandings, fetchMatches]);
+
+  useRealtime('matches', () => {
+    fetchStandings();
+    fetchMatches();
+  });
 
   const nextMatch = matches.find((m) => !m.is_played);
   const playedCount = matches.filter((m) => m.is_played).length;

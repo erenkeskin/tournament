@@ -1,15 +1,24 @@
 import { AlertCircle, Skull } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useRealtime } from '@/hooks/useRealtime';
 import { apiFetch } from '@/lib/api';
 
 export function Header() {
   const [balance, setBalance] = useState<number | null>(null);
 
-  useEffect(() => {
+  const fetchBalance = useCallback(() => {
     apiFetch<{ balance: number }>('/api/wallet')
       .then((data) => setBalance(data.balance))
       .catch(() => setBalance(null));
   }, []);
+
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
+
+  useRealtime('wallets', () => {
+    fetchBalance();
+  });
 
   const isBankrupt = balance !== null && balance <= 0;
 

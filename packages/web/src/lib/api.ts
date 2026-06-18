@@ -1,7 +1,8 @@
+import { supabase } from './supabase';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
-  const { supabase } = await import('./supabase');
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
 

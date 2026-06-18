@@ -18,28 +18,36 @@ export function Betting() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Bahis Brokerı</h1>
+      {upcoming.length === 0 && (
+        <p className="text-neutral-500">
+          Henüz bahis yapılabilecek maç yok. Admin'in fikstür oluşturması ve oran girmesi gerekiyor.
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         {upcoming.map((m) => (
           <div key={m.id} className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
             <div className="mb-4 flex items-center justify-between text-sm">
-              <span className="font-medium">{m.home_player_id}</span>
+              <span className="font-medium">{m.home_player_id.slice(0, 8)}</span>
               <span className="text-neutral-500">vs</span>
-              <span className="font-medium">{m.away_player_id}</span>
+              <span className="font-medium">{m.away_player_id.slice(0, 8)}</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {(['HOME', 'DRAW', 'AWAY'] as const).map((type) => (
-                <button
-                  type="button"
-                  key={type}
-                  onClick={() => openSlip(m.id, type, defaultOdds[type])}
-                  className="rounded-lg border border-neutral-700 bg-neutral-800 py-2 text-center text-sm transition-colors hover:border-accent hover:bg-accent/10"
-                >
-                  <span className="block text-xs text-neutral-400">
-                    {type === 'HOME' ? 'Ev' : type === 'DRAW' ? 'B' : 'Dep'}
-                  </span>
-                  <span className="font-bold text-accent">{defaultOdds[type].toFixed(2)}</span>
-                </button>
-              ))}
+              {(['HOME', 'DRAW', 'AWAY'] as const).map((type) => {
+                const odds = defaultOdds[type];
+                return (
+                  <button
+                    type="button"
+                    key={type}
+                    onClick={() => openSlip(m.id, type, odds)}
+                    className="rounded-lg border border-neutral-700 bg-neutral-800 py-2 text-center text-sm transition-colors hover:border-accent hover:bg-accent/10"
+                  >
+                    <span className="block text-xs text-neutral-400">
+                      {type === 'HOME' ? 'Ev' : type === 'DRAW' ? 'B' : 'Dep'}
+                    </span>
+                    <span className="font-bold text-accent">{defaultOdds[type].toFixed(2)}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -64,7 +72,10 @@ export function Betting() {
                 type="number"
                 min={1}
                 value={amount || ''}
-                onChange={(e) => setAmount(Number(e.target.value), defaultOdds[betType || 'HOME'])}
+                onChange={(e) => {
+                  const bType = useBetSlipStore.getState().betType;
+                  setAmount(Number(e.target.value), defaultOdds[bType || 'HOME']);
+                }}
                 className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
                 placeholder="Bahis miktarı"
               />
