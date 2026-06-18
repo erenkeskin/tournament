@@ -10,7 +10,7 @@
     "dev:web": "bun --filter @vig/web dev",
     "test": "bun --filter '*' test",
     "lint": "bun biome check .",
-    "lint:fix": "bun biome check --apply .",
+    "lint:fix": "bun biome check --write .",
     "format": "bun biome format --write ."
   },
   "devDependencies": {
