@@ -15,7 +15,7 @@ export function LiveDraw() {
   const [selectedPlayerId, setSelectedPlayerId] = useState('');
 
   useEffect(() => {
-    apiFetch<Player[]>('/api/admin/players')
+    apiFetch<Player[]>('/api/players')
       .then(setPlayers)
       .catch(() => {});
     apiFetch<string[]>('/api/admin/teams/wheel')
@@ -38,7 +38,7 @@ export function LiveDraw() {
       const nations = await apiFetch<string[]>('/api/admin/teams/wheel');
       setAvailableNations(nations);
       // Refresh players
-      const updatedPlayers = await apiFetch<Player[]>('/api/admin/players');
+      const updatedPlayers = await apiFetch<Player[]>('/api/players');
       setPlayers(updatedPlayers);
     } catch {
       // silently handle

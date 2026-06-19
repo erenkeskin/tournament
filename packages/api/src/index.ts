@@ -23,28 +23,43 @@ app.use(
   }),
 );
 
-// Health check (no auth)
+// Health check
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
-// All routes below /api require auth
 const api = app.basePath('/api');
-api.use('*', authMiddleware);
 
-// Public authed routes
-api.get('/wallet', async (c) => {
+// PUBLIC routes — no auth needed
+api.route('/matches', matchesRoutes);
+api.route('/standings', standingsRoutes);
+
+// Public player list (no auth)
+api.get('/players', async (c) => {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, selected_team, avatar_url, tournament_status')
+    .order('created_at', { ascending: true });
+
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+// AUTH-REQUIRED routes
+const authed = api.basePath('/');
+authed.use('*', authMiddleware as never);
+
+authed.get('/wallet', async (c) => {
   const user = c.get('user');
   const supabase = getSupabaseClient();
   const { data } = await supabase.from('wallets').select('*').eq('profile_id', user.id).single();
   return c.json(data);
 });
 
-api.route('/matches', matchesRoutes);
-api.route('/standings', standingsRoutes);
-api.route('/bets', betsRoutes);
+authed.route('/bets', betsRoutes);
 
-// Admin routes (middleware first, then routes)
+// ADMIN routes
 const admin = api.basePath('/admin');
-admin.use('*', adminMiddleware);
+admin.use('*', adminMiddleware as never);
 admin.route('/', adminRoutes);
 
 export default {

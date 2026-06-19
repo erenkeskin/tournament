@@ -70,7 +70,7 @@ export function Betting() {
     fetchMatches();
     fetchBalance();
     fetchBets();
-    apiFetch<Player[]>('/api/admin/players')
+    apiFetch<Player[]>('/api/players')
       .then((data) => {
         const map = new Map<string, Player>();
         for (const p of data) map.set(p.id, p);

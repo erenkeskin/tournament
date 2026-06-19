@@ -103,7 +103,7 @@ export function TournamentTree() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([apiFetch<Player[]>('/api/admin/players'), apiFetch<Match[]>('/api/matches')])
+    Promise.all([apiFetch<Player[]>('/api/players'), apiFetch<Match[]>('/api/matches')])
       .then(([p, m]) => {
         const map = new Map<string, Player>();
         for (const player of p) map.set(player.id, player);

@@ -49,7 +49,7 @@ export function Landing() {
   const [stats, setStats] = useState({ players: 0, matches: 0 });
 
   useEffect(() => {
-    apiFetch<{ length: number }>('/api/admin/players')
+    apiFetch<{ length: number }>('/api/players')
       .then((d) => setStats((s) => ({ ...s, players: d.length })))
       .catch(() => {});
     apiFetch<{ length: number }>('/api/matches')
