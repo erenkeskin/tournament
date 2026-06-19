@@ -1,5 +1,6 @@
 import { Coins, History, TrendingUp, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useBetSlipStore } from '@/stores/bet-slip';
@@ -53,6 +54,9 @@ export function Betting() {
   const [balance, setBalance] = useState<number | null>(null);
   const [bets, setBets] = useState<Bet[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [oddsData, setOddsData] = useState<
+    Record<string, { odds_home: number; odds_draw: number; odds_away: number }>
+  >({});
 
   const fetchBalance = useCallback(() => {
     apiFetch<{ balance: number }>('/api/wallet')
@@ -77,16 +81,34 @@ export function Betting() {
         setPlayers(map);
       })
       .catch(() => {});
+    // Fetch real odds
+    apiFetch<{ match_id: string; odds_home: number; odds_draw: number; odds_away: number }[]>(
+      '/api/matches/odds/all',
+    )
+      .then((data) => {
+        const map: Record<string, { odds_home: number; odds_draw: number; odds_away: number }> = {};
+        for (const o of data) map[o.match_id] = o;
+        setOddsData(map);
+      })
+      .catch(() => {});
   }, [fetchMatches, fetchBalance, fetchBets]);
 
   const upcoming = matches.filter((m) => !m.is_played);
   const defaultOdds = { HOME: 2.0, DRAW: 3.5, AWAY: 4.0 };
   const getPlayer = (id: string) => players.get(id);
 
+  const getOdds = (matchId: string) => {
+    const o = oddsData[matchId];
+    return o ? { HOME: o.odds_home, DRAW: o.odds_draw, AWAY: o.odds_away } : defaultOdds;
+  };
+
   const handlePlaceBet = async () => {
     await placeBet();
     fetchBalance();
     fetchBets();
+    toast.success('Bahis yapıldı!', {
+      description: "Maç sonucu açıklandığında VP'niz güncellenecek.",
+    });
   };
 
   return (
@@ -213,14 +235,14 @@ export function Betting() {
                     <button
                       type="button"
                       key={type}
-                      onClick={() => openSlip(m.id, type, defaultOdds[type])}
+                      onClick={() => openSlip(m.id, type, getOdds(m.id)[type])}
                       className="group/btn rounded-xl border border-border bg-surface px-3 py-3 text-center transition-all hover:border-gold/40 hover:bg-gold/5 active:scale-[0.98]"
                     >
                       <span className="block text-[11px] font-medium text-chalk-muted mb-0.5">
                         {BET_LABELS[type]}
                       </span>
                       <span className="block font-mono text-lg font-bold text-gold tabular-nums group-hover/btn:scale-110 transition-transform">
-                        {defaultOdds[type].toFixed(2)}
+                        {getOdds(m.id)[type].toFixed(2)}
                       </span>
                     </button>
                   ))}
@@ -263,7 +285,9 @@ export function Betting() {
                   </span>
                   {betType && (
                     <span className="font-mono text-sm text-chalk">
-                      {defaultOdds[betType].toFixed(2)}
+                      {getOdds(useBetSlipStore.getState().matchId || '')[betType || 'HOME'].toFixed(
+                        2,
+                      )}
                     </span>
                   )}
                 </div>
@@ -282,7 +306,10 @@ export function Betting() {
                     value={amount || ''}
                     onChange={(e) => {
                       const bType = useBetSlipStore.getState().betType;
-                      setAmount(Number(e.target.value), defaultOdds[bType || 'HOME']);
+                      setAmount(
+                        Number(e.target.value),
+                        getOdds(useBetSlipStore.getState().matchId || '')[bType || 'HOME'],
+                      );
                     }}
                     className="input !text-lg !font-mono !py-3 text-center"
                     placeholder="0"
@@ -306,7 +333,10 @@ export function Betting() {
                     disabled={(balance || 0) < v}
                     onClick={() => {
                       const bType = useBetSlipStore.getState().betType;
-                      setAmount(v, defaultOdds[bType || 'HOME']);
+                      setAmount(
+                        v,
+                        getOdds(useBetSlipStore.getState().matchId || '')[bType || 'HOME'],
+                      );
                     }}
                     className="rounded-lg border border-border bg-surface px-2 py-2 text-xs font-mono text-chalk-muted hover:border-gold/30 hover:text-gold transition-all disabled:opacity-30"
                   >

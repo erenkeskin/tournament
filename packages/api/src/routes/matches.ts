@@ -28,3 +28,11 @@ matchesRoutes.get('/:id', async (c) => {
   if (error) return c.json({ error: error.message }, 404);
   return c.json(data);
 });
+
+// Public odds for all matches
+matchesRoutes.get('/odds/all', async (c) => {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.from('odds').select('*');
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});

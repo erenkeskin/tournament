@@ -326,3 +326,11 @@ adminRoutes.post('/applications/:id/reject', async (c) => {
   if (error) return c.json({ error: error.message }, 500);
   return c.json({ success: true });
 });
+
+// Reset entire tournament
+adminRoutes.post('/reset', async (c) => {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.rpc('reset_tournament');
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json({ success: true, message: 'Turnuva sıfırlandı' });
+});

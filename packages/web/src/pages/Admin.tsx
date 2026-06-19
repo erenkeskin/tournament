@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
 
 interface Player {
@@ -104,6 +105,7 @@ export function Admin() {
         body: JSON.stringify({ homeScore, awayScore, redCards: [] }),
       });
       setMessage('Skor kaydedildi!');
+      toast.success('Skor kaydedildi', { description: 'Maç sonucu ve bahisler güncellendi.' });
       setMatchId('');
       fetchMatches();
     } catch (e) {
@@ -342,13 +344,20 @@ export function Admin() {
         <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
           <h2 className="mb-4 text-lg font-semibold">Skor Girişi</h2>
           <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Match ID"
+            <select
               value={matchId}
               onChange={(e) => setMatchId(e.target.value)}
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-            />
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-chalk"
+            >
+              <option value="">Maç seç...</option>
+              {matches.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.stage === 'LEAGUE' ? `R${m.round_number}` : 'Playoff'} —{' '}
+                  {m.home_player_id.slice(0, 8)} vs {m.away_player_id.slice(0, 8)}{' '}
+                  {m.is_played ? '✓' : ''}
+                </option>
+              ))}
+            </select>
             <div className="flex gap-3">
               <input
                 type="number"
