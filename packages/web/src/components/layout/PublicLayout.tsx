@@ -1,7 +1,17 @@
-import { GitBranch, LayoutDashboard, LogIn, LogOut, Swords, Trophy, UserPlus } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Coins,
+  GitBranch,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Swords,
+  Trophy,
+  UserPlus,
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { AuthDialog } from '@/components/auth/AuthDialog';
+import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 
 const AVATARS: Record<string, string> = {
@@ -23,9 +33,21 @@ export function PublicLayout() {
   const { user, profile, signOut } = useAuthStore();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [balance, setBalance] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const avatarEmoji = profile?.avatar_url ? AVATARS[profile.avatar_url] || '👤' : '👤';
+
+  const fetchBalance = useCallback(() => {
+    if (!user) return;
+    apiFetch<{ balance: number }>('/api/wallet')
+      .then((d) => setBalance(d.balance))
+      .catch(() => setBalance(null));
+  }, [user]);
+
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
 
   return (
     <div className="min-h-screen bg-pitch">
@@ -64,6 +86,17 @@ export function PublicLayout() {
             </NavLink>
 
             <div className="ml-4 h-5 w-px bg-border" />
+
+            {/* VP Balance */}
+            {user && balance !== null && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 mr-2">
+                <Coins className="h-3.5 w-3.5 text-gold" />
+                <span className="font-mono text-sm font-bold text-gold tabular-nums">
+                  {balance.toFixed(0)}
+                </span>
+                <span className="text-xs text-chalk-muted">VP</span>
+              </div>
+            )}
 
             {user ? (
               <div className="flex items-center gap-2">
