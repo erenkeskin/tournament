@@ -1,7 +1,6 @@
 import { ArrowRight, ChevronDown, Coins, Swords, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 
