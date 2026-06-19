@@ -33,7 +33,7 @@ function MatchCard({ match, players }: { match: Match; players: Map<string, Play
   const awayScore = match.away_score ?? 0;
   const homeWin = match.is_played && homeScore > awayScore;
   const awayWin = match.is_played && awayScore > homeScore;
-  const isDraw = match.is_played && homeScore === awayScore;
+  const _isDraw = match.is_played && homeScore === awayScore;
   const homeAvatar = home?.avatar_url ? AVATARS[home.avatar_url] || '👤' : '👤';
   const awayAvatar = away?.avatar_url ? AVATARS[away.avatar_url] || '👤' : '👤';
 
