@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRealtime } from '@/hooks/useRealtime';
 import { apiFetch } from '@/lib/api';
+import { getFlag } from '@/lib/flags';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth';
 import { useMatchStore } from '@/stores/matches';
@@ -201,7 +202,9 @@ export function Dashboard() {
                       {row.username}{' '}
                       {isMe && <span className="text-xs text-chalk-muted">(sen)</span>}
                     </td>
-                    <td className="table-cell text-chalk-muted">{row.team || '—'}</td>
+                    <td className="table-cell text-chalk-muted">
+                      {getFlag(row.team)} {row.team || '—'}
+                    </td>
                     <td className="table-cell text-center">{row.played}</td>
                     <td className="table-cell text-center">{row.won}</td>
                     <td className="table-cell text-center">{row.drawn}</td>

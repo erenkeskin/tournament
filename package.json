@@ -11,7 +11,9 @@
     "test": "bun --filter '*' test",
     "lint": "bun biome check .",
     "lint:fix": "bun biome check --write .",
-    "format": "bun biome format --write ."
+    "format": "bun biome format --write .",
+    "seed": "bun run scripts/seed.ts",
+    "seed:reset": "bun run scripts/seed.ts --reset"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0"
