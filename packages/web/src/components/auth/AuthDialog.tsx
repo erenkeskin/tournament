@@ -1,8 +1,16 @@
 import { type FormEvent, useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
 
-export function AuthDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+export function AuthDialog({
+  open,
+  onClose,
+  initialMode = 'signin',
+}: {
+  open: boolean;
+  onClose: () => void;
+  initialMode?: 'signin' | 'signup';
+}) {
+  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');

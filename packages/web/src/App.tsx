@@ -1,7 +1,7 @@
-import { Component, type ReactNode, useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { AuthDialog } from './components/auth/AuthDialog';
+import { Component, type ReactNode, useEffect } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { PublicLayout } from './components/layout/PublicLayout';
 import { Admin } from './pages/Admin';
 import { Apply } from './pages/Apply';
 import { Betting } from './pages/Betting';
@@ -25,7 +25,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
       return (
         <div className="flex min-h-screen items-center justify-center bg-pitch p-10">
           <div className="card max-w-lg border-red-card/30">
-            <h1 className="mb-2 font-display text-2xl text-red-card">Bir hata oluştu</h1>
+            <h1 className="mb-2 font-display text-2xl text-red-card">Hata</h1>
             <pre className="whitespace-pre-wrap text-sm text-chalk-muted">
               {this.state.error.message}
             </pre>
@@ -38,58 +38,43 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 }
 
 function AppContent() {
-  const { user, loading, initialize } = useAuthStore();
-  const [authOpen, setAuthOpen] = useState(false);
-  const location = useLocation();
+  const { loading, initialize } = useAuthStore();
 
   useEffect(() => {
     initialize().catch((err: Error) => console.error('Auth init failed:', err));
   }, [initialize]);
-
-  useEffect(() => {
-    if (!loading && !user) setAuthOpen(true);
-    else setAuthOpen(false);
-  }, [loading, user]);
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-pitch">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-chalk-muted/20 border-t-gold" />
-          <p className="text-sm text-chalk-muted">Yükleniyor...</p>
+          <p className="font-body text-sm text-chalk-muted">Yükleniyor...</p>
         </div>
       </div>
     );
   }
 
-  const _isLanding =
-    location.pathname === '/' || location.pathname === '/tree' || location.pathname === '/fixtures';
-
   return (
-    <>
-      <AuthDialog open={authOpen} onClose={() => setAuthOpen(false)} />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
-        <Route path="/tree" element={<TournamentTree />} />
-        <Route path="/fixtures" element={<Fixtures />} />
+    <Routes>
+      {/* PUBLIC — Landing aesthetic for everyone */}
+      <Route element={<PublicLayout />}>
+        <Route index element={<Landing />} />
+        <Route path="fixtures" element={<Fixtures />} />
+        <Route path="tree" element={<TournamentTree />} />
+        <Route path="apply" element={<Apply />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="betting" element={<Betting />} />
+      </Route>
 
-        {/* Auth-required routes */}
-        {user && (
-          <>
-            <Route path="/apply" element={<Apply />} />
-            <Route element={<Layout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/betting" element={<Betting />} />
-              <Route path="/draw" element={<LiveDraw />} />
-              <Route path="/admin" element={<Admin />} />
-            </Route>
-          </>
-        )}
+      {/* ADMIN ONLY — Sidebar layout */}
+      <Route element={<Layout />}>
+        <Route path="draw" element={<LiveDraw />} />
+        <Route path="admin" element={<Admin />} />
+      </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
