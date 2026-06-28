@@ -19,42 +19,44 @@ async function createPlayers() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const adminEmail = 'admin@vig.com';
+  // ── Admin ──
+  const adminEmail = 'erenkeskin@vignetim.com';
   const adminPassword = 'admin123';
 
-  // Admin hesabını oluştur / giriş yap
   const { data: adminSignUp } = await supabase.auth.signUp({
     email: adminEmail,
     password: adminPassword,
-    options: { data: { username: 'Admin' } },
+    options: { data: { username: 'The CTO' } },
   });
 
   let adminId = adminSignUp.user?.id;
   if (adminId) {
-    console.log('✅ Admin oluşturuldu');
+    console.log('✅ Admin (The CTO) oluşturuldu');
   } else {
     const { data: signIn } = await supabase.auth.signInWithPassword({
       email: adminEmail,
       password: adminPassword,
     });
     adminId = signIn.user?.id;
-    console.log('✅ Admin zaten var, giriş yapıldı');
+    console.log('✅ Admin (The CTO) zaten var, giriş yapıldı');
   }
 
   if (adminId) {
-    await supabase.from('profiles').update({ is_admin: true, tournament_status: 'APPROVED' }).eq('id', adminId);
+    await supabase
+      .from('profiles')
+      .update({ is_admin: true, tournament_status: 'APPROVED' })
+      .eq('id', adminId);
   }
 
-  // Turnuva katılımcıları
+  // ── Oyuncular ──
   const players = [
-    { email: 'thecto@vig.com',   password: 'turnuva25', username: 'TheCTO' },
-    { email: 'gorkem@vig.com',   password: 'turnuva25', username: 'Görkem' },
-    { email: 'kbhh@vig.com',     password: 'turnuva25', username: 'KBHH' },
-    { email: 'ramis@vig.com',    password: 'turnuva25', username: 'Ramis' },
-    { email: 'ibrahim@vig.com',  password: 'turnuva25', username: 'İbrahim' },
-    { email: 'mehmet@vig.com',   password: 'turnuva25', username: 'Mehmet' },
-    { email: 'ali@vig.com',      password: 'turnuva25', username: 'Ali' },
-    { email: 'ihsan@vig.com',    password: 'turnuva25', username: 'İhsan' },
+    { email: 'gorkemcolak0@gmail.com',         password: 'turnuva25', username: 'Görkem' },
+    { email: 'keremdemirturk@vignetim.com',    password: 'turnuva25', username: 'KBHH' },
+    { email: 'ramiskalkan@vignetim.com',       password: 'turnuva25', username: 'Ramis' },
+    { email: 'ibrahimaydin@vignetim.com',      password: 'turnuva25', username: 'İbrahim' },
+    { email: 'mehmettopak@vignetim.com',       password: 'turnuva25', username: 'Mehmet' },
+    { email: 'alikilic@vignetim.com',          password: 'turnuva25', username: 'Ali' },
+    { email: 'dicletemiz@vignetim.com',        password: 'turnuva25', username: 'İhsan' },
   ];
 
   const playerIds: string[] = [];
@@ -69,7 +71,6 @@ async function createPlayers() {
     let userId = data.user?.id;
 
     if (error || !userId) {
-      // Zaten varsa giriş yap
       const { data: signIn } = await supabase.auth.signInWithPassword({
         email: p.email,
         password: p.password,
@@ -78,11 +79,7 @@ async function createPlayers() {
     }
 
     if (userId) {
-      await supabase
-        .from('profiles')
-        .update({ tournament_status: 'APPROVED' })
-        .eq('id', userId);
-
+      await supabase.from('profiles').update({ tournament_status: 'APPROVED' }).eq('id', userId);
       playerIds.push(userId);
       console.log(`✅ ${p.username} (${p.email}) — hazır`);
     } else {
@@ -90,10 +87,10 @@ async function createPlayers() {
     }
   }
 
-  console.log(`\n📋 ${playerIds.length} oyuncu hazır.`);
-  console.log('\n🔑 Giriş bilgileri (herkes için aynı şifre):');
-  console.log('   Şifre: turnuva25');
-  console.log('   Admin: admin@vig.com / admin123');
+  console.log(`\n📋 ${playerIds.length} oyuncu + 1 admin hazır.`);
+  console.log('\n🔑 Giriş bilgileri:');
+  console.log('   Admin:  erenkeskin@vignetim.com / admin123');
+  console.log('   Oyuncu şifresi (herkes): turnuva25');
 }
 
 createPlayers().catch(console.error);
