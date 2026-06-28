@@ -8,6 +8,7 @@
     "dev": "bun --filter '*' dev",
     "dev:api": "bun --filter @vig/api dev",
     "dev:web": "bun --filter @vig/web dev",
+    "build:web": "bun --filter @vig/web build",
     "test": "bun --filter '*' test",
     "lint": "bun biome check .",
     "lint:fix": "bun biome check --write .",

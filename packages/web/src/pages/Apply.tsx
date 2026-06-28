@@ -11,8 +11,10 @@ interface Avatar {
   color: string;
 }
 
+type ApplicationStatus = 'APPROVED' | 'REJECTED' | 'PENDING';
+
 const STATUS_CONFIG: Record<
-  string,
+  ApplicationStatus,
   { icon: React.FC<{ className?: string }>; label: string; className: string }
 > = {
   APPROVED: { icon: Check, label: 'Onaylandı — Turnuvadasın!', className: 'badge-green' },
@@ -26,7 +28,9 @@ export function Apply() {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState(profile?.tournament_status || 'PENDING');
+  const [status, setStatus] = useState<ApplicationStatus>(
+    (profile?.tournament_status as ApplicationStatus) || 'PENDING',
+  );
 
   useEffect(() => {
     supabase
@@ -43,7 +47,7 @@ export function Apply() {
   ]);
 
   useEffect(() => {
-    if (profile?.tournament_status) setStatus(profile.tournament_status);
+    if (profile?.tournament_status) setStatus(profile.tournament_status as ApplicationStatus);
   }, [profile]);
 
   const handleApply = async () => {
@@ -61,7 +65,7 @@ export function Apply() {
     setSubmitting(false);
   };
 
-  const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
+  const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING;
   const StatusIcon = statusCfg.icon;
   const isApplied = status !== 'PENDING' || profile?.avatar_url;
 

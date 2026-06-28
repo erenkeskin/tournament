@@ -13,6 +13,7 @@ interface Player {
 
 interface Match {
   id: string;
+  stage: string;
   round_number: number;
   home_player_id: string;
   away_player_id: string;
