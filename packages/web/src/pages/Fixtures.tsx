@@ -146,7 +146,9 @@ export function Fixtures() {
         for (const p of data) map.set(p.id, p);
         setPlayers(map);
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Failed to fetch players:', err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
