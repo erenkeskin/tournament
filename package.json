@@ -14,7 +14,8 @@
     "lint:fix": "bun biome check --write .",
     "format": "bun biome format --write .",
     "seed": "bun run scripts/seed.ts",
-    "seed:reset": "bun run scripts/seed.ts --reset"
+    "seed:reset": "bun run scripts/seed.ts --reset",
+    "create-players": "bun run scripts/create-players.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0"
