@@ -329,6 +329,61 @@ adminRoutes.post('/applications/:id/reject', async (c) => {
   return c.json({ success: true });
 });
 
+// List all bets (admin only)
+	adminRoutes.get('/bets', async (c) => {
+	  const supabase = getSupabaseClient();
+	  const { data, error } = await supabase
+	    .from('bets')
+	    .select('*, profiles(username)')
+	    .order('created_at', { ascending: false })
+	    .limit(200);
+
+	  if (error) return c.json({ error: error.message }, 500);
+
+	  const bets = (data || []).map((b: any) => ({
+	    id: b.id,
+	    profile_id: b.profile_id,
+	    username: b.profiles?.username || '?',
+	    match_id: b.match_id,
+	    bet_type: b.bet_type,
+	    amount: b.amount,
+	    potential_payout: b.potential_payout,
+	    status: b.status,
+	    created_at: b.created_at,
+	  }));
+
+	  return c.json(bets);
+	});
+
+// Assign random avatars to players without one
+	adminRoutes.post('/assign-avatars', async (c) => {
+	  const supabase = getSupabaseClient();
+	  const pool = ['lion', 'eagle', 'wolf', 'dragon', 'shark', 'tiger', 'bull', 'falcon', 'panther', 'gorilla', 'cobra', 'rhino'];
+
+	  const { data: profiles } = await supabase.from('profiles').select('id, avatar_url');
+	  if (!profiles) return c.json({ error: 'No profiles found' }, 404);
+
+	  const used = new Set(profiles.filter((p) => p.avatar_url).map((p) => p.avatar_url));
+	  const available = pool.filter((a) => !used.has(a));
+
+	  for (let i = available.length - 1; i > 0; i--) {
+	    const j = Math.floor(Math.random() * (i + 1));
+	    [available[i], available[j]] = [available[j], available[i]];
+	  }
+
+	  let count = 0;
+	  let idx = 0;
+	  for (const p of profiles) {
+	    if (!p.avatar_url && idx < available.length) {
+	      await supabase.from('profiles').update({ avatar_url: available[idx] }).eq('id', p.id);
+	      idx++;
+	      count++;
+	    }
+	  }
+
+	  return c.json({ assigned: count });
+	});
+
 // Reset entire tournament
 adminRoutes.post('/reset', async (c) => {
   const supabase = getSupabaseClient();
