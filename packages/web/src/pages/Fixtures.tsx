@@ -138,7 +138,7 @@ export function Fixtures() {
       // Build a clean full-width export div
       const exportDiv = document.createElement('div');
       exportDiv.style.cssText =
-        'position:fixed;left:-9999px;top:0;width:1200px;padding:40px;background:#0a0a0b;color:#e5e5e5;font-family:Inter,sans-serif;z-index:99999;';
+        'position:fixed;left:-9999px;top:0;width:1600px;padding:48px;background:#0a0a0b;color:#e5e5e5;font-family:Inter,sans-serif;z-index:99999;';
 
       const total = matches.length;
       const played = matches.filter((m) => m.is_played).length;
@@ -185,15 +185,15 @@ export function Fixtures() {
             : '';
 
           html += `
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #1a1a1a;border-radius:8px;background:#0d0d0d">
-              <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;min-width:0">
-                <span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hName}<span style="color:#888;font-weight:400">${hTeam}</span></span>
-                <span style="font-size:18px;flex-shrink:0">${hEmoji}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #1a1a1a;border-radius:8px;background:#0d0d0d">
+              <div style="display:flex;align-items:center;gap:10px;flex:1.5;justify-content:flex-end;min-width:0">
+                <span style="font-size:14px;font-weight:600;white-space:nowrap;max-width:250px;overflow:hidden;text-overflow:ellipsis">${hName}<span style="color:#888;font-weight:400">${hTeam}</span></span>
+                <span style="font-size:20px;flex-shrink:0">${hEmoji}</span>
               </div>
-              <div style="display:flex;align-items:center;justify-content:center;min-width:80px">${scoreHtml}${statusBadge}</div>
-              <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-                <span style="font-size:18px;flex-shrink:0">${aEmoji}</span>
-                <span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${aName}<span style="color:#888;font-weight:400">${aTeam}</span></span>
+              <div style="display:flex;align-items:center;justify-content:center;min-width:100px;padding:0 16px">${scoreHtml}${statusBadge}</div>
+              <div style="display:flex;align-items:center;gap:10px;flex:1.5;min-width:0">
+                <span style="font-size:20px;flex-shrink:0">${aEmoji}</span>
+                <span style="font-size:14px;font-weight:600;white-space:nowrap;max-width:250px;overflow:hidden;text-overflow:ellipsis">${aName}<span style="color:#888;font-weight:400">${aTeam}</span></span>
               </div>
             </div>
           `;

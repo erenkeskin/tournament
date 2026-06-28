@@ -189,6 +189,16 @@ export function Admin() {
     }
   };
 
+  const assignAvatars = async () => {
+    try {
+      const result = await apiFetch<{ assigned: number }>('/api/admin/assign-avatars', { method: 'POST' });
+      toast.success(`${result.assigned} oyuncuya avatar atandı!`);
+      fetchPlayers();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Hata');
+    }
+  };
+
   const promoteAdmin = async () => {
     if (!promoteId) return;
     try {
@@ -339,6 +349,13 @@ export function Admin() {
             className="rounded-lg border border-gold px-4 py-2.5 text-sm font-bold text-gold hover:bg-gold/10 transition-all"
           >
             🏆 Playoff Oluştur
+          </button>
+          <button
+            type="button"
+            onClick={assignAvatars}
+            className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-chalk-muted hover:bg-surface hover:text-chalk transition-all"
+          >
+            🎲 Random Avatar Ata
           </button>
         </div>
       </div>
@@ -635,6 +652,7 @@ export function Admin() {
       </div>
 
       {/* Bet Monitoring */}
+      <div id="bets">
       {adminBets.length > 0 && (
         <div className="card">
           <h2 className="mb-4 font-display text-xl tracking-wide text-chalk">Bahis Takip</h2>
@@ -698,6 +716,7 @@ export function Admin() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

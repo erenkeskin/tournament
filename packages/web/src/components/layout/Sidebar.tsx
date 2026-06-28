@@ -1,4 +1,4 @@
-import { ArrowLeft, LogOut, Radio, ShieldAlert, Trophy } from 'lucide-react';
+import { ArrowLeft, Coins, LogOut, Radio, ShieldAlert, Trophy } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth';
@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth';
 const links = [
   { to: '/draw', icon: Radio, label: 'Kader Çarkı' },
   { to: '/admin', icon: ShieldAlert, label: 'Admin Paneli' },
+  { to: '/admin#bets', icon: Coins, label: 'Bahis Takip' },
 ];
 
 export function Sidebar() {
