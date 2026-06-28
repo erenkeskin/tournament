@@ -75,6 +75,16 @@ export function PublicLayout() {
               </span>
             </NavLink>
             <NavLink
+              to="/betting"
+              className={({ isActive }) =>
+                `rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? 'text-gold bg-gold/5' : 'text-chalk-muted hover:text-chalk'}`
+              }
+            >
+              <span className="flex items-center gap-1.5">
+                <Coins className="h-3.5 w-3.5" /> Bahis
+              </span>
+            </NavLink>
+            <NavLink
               to="/tree"
               className={({ isActive }) =>
                 `rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? 'text-gold bg-gold/5' : 'text-chalk-muted hover:text-chalk'}`
@@ -84,6 +94,19 @@ export function PublicLayout() {
                 <GitBranch className="h-3.5 w-3.5" /> Turnuva Ağacı
               </span>
             </NavLink>
+
+            {user && (
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? 'text-gold bg-gold/5' : 'text-chalk-muted hover:text-chalk'}`
+                }
+              >
+                <span className="flex items-center gap-1.5">
+                  <Trophy className="h-3.5 w-3.5" /> Puan Durumu
+                </span>
+              </NavLink>
+            )}
 
             <div className="ml-4 h-5 w-px bg-border" />
 
