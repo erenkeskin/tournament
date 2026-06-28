@@ -355,6 +355,16 @@ adminRoutes.post('/applications/:id/reject', async (c) => {
 	  return c.json(bets);
 	});
 
+// Clear all team assignments
+	adminRoutes.post('/clear-teams', async (c) => {
+	  const supabase = getSupabaseClient();
+	  const { error } = await supabase.from('profiles')
+	    .update({ selected_team: null })
+	    .neq('selected_team', null);
+	  if (error) return c.json({ error: error.message }, 500);
+	  return c.json({ success: true });
+	});
+
 // Assign random avatars to players without one
 	adminRoutes.post('/assign-avatars', async (c) => {
 	  const supabase = getSupabaseClient();

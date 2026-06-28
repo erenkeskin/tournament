@@ -168,6 +168,16 @@ export function Admin() {
     }
   };
 
+  const clearTeams = async () => {
+    try {
+      await apiFetch('/api/admin/clear-teams', { method: 'POST' });
+      toast.success('Tüm takımlar temizlendi!');
+      fetchPlayers();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Hata');
+    }
+  };
+
   const assignAvatars = async () => {
     try {
       const result = await apiFetch<{ assigned: number }>('/api/admin/assign-avatars', { method: 'POST' });
@@ -335,6 +345,13 @@ export function Admin() {
             className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-chalk-muted hover:bg-surface hover:text-chalk transition-all"
           >
             🎲 Random Avatar Ata
+          </button>
+          <button
+            type="button"
+            onClick={clearTeams}
+            className="rounded-lg border border-red-card/40 px-4 py-2.5 text-sm font-medium text-red-card hover:bg-red-card/10 transition-all"
+          >
+            🗑 Takımları Temizle
           </button>
         </div>
       </div>
