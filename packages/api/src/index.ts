@@ -72,6 +72,7 @@ export function createApp() {
 
   // ADMIN routes
   const admin = api.basePath('/admin');
+  admin.use('*', authMiddleware as never);
   admin.use('*', adminMiddleware as never);
   admin.route('/', adminRoutes);
 
