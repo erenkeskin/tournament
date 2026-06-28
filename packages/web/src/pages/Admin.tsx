@@ -22,17 +22,26 @@ interface Match {
   away_score: number | null;
 }
 
+interface RedCardInput {
+  playerId: string;
+  playerName: string;
+}
+
 export function Admin() {
   // Score input
   const [matchId, setMatchId] = useState('');
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
+  const [redCards, setRedCards] = useState<RedCardInput[]>([]);
+  const [redName, setRedName] = useState('');
 
   // Odds input
   const [oddsMatchId, setOddsMatchId] = useState('');
   const [oddsHome, setOddsHome] = useState(2.0);
   const [oddsDraw, setOddsDraw] = useState(3.5);
   const [oddsAway, setOddsAway] = useState(4.0);
+  const [oddsUnder, setOddsUnder] = useState(1.85);
+  const [oddsOver, setOddsOver] = useState(1.95);
 
   // Tournament management
   const [players, setPlayers] = useState<Player[]>([]);
@@ -40,6 +49,10 @@ export function Admin() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [message, setMessage] = useState('');
   const [promoteId, setPromoteId] = useState('');
+
+  const playerMap = new Map(players.map((p) => [p.id, p]));
+  const playerName = (id: string) => playerMap.get(id)?.username || id.slice(0, 8);
+  const playerTeam = (id: string) => playerMap.get(id)?.selected_team || null;
 
   const fetchPlayers = useCallback(async () => {
     const data = await apiFetch<Player[]>('/api/admin/players');
@@ -103,11 +116,17 @@ export function Admin() {
     try {
       await apiFetch(`/api/admin/matches/${matchId}/score`, {
         method: 'POST',
-        body: JSON.stringify({ homeScore, awayScore, redCards: [] }),
+        body: JSON.stringify({
+          homeScore,
+          awayScore,
+          redCards: redCards.map((rc) => ({ playerId: rc.playerId, playerName: rc.playerName })),
+        }),
       });
       setMessage('Skor kaydedildi!');
       toast.success('Skor kaydedildi', { description: 'Maç sonucu ve bahisler güncellendi.' });
       setMatchId('');
+      setRedCards([]);
+      setRedName('');
       fetchMatches();
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Hata');
@@ -131,9 +150,18 @@ export function Admin() {
     try {
       await apiFetch('/api/admin/odds', {
         method: 'POST',
-        body: JSON.stringify({ matchId: oddsMatchId, oddsHome, oddsDraw, oddsAway }),
+        body: JSON.stringify({
+          matchId: oddsMatchId,
+          oddsHome,
+          oddsDraw,
+          oddsAway,
+          oddsUnder,
+          oddsOver,
+        }),
       });
-      setMessage('Oranlar kaydedildi!');
+      toast.success('Oranlar kaydedildi', {
+        description: `${playerName(oddsMatchId)} maçı için oranlar güncellendi.`,
+      });
       setOddsMatchId('');
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Hata');
@@ -153,6 +181,21 @@ export function Admin() {
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Hata');
     }
+  };
+
+  const addRedCard = () => {
+    if (!redName.trim()) return;
+    setRedCards((prev) => [...prev, { playerId: '', playerName: redName.trim() }]);
+    setRedName('');
+  };
+
+  const removeRedCard = (idx: number) => {
+    setRedCards((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const AVATARS: Record<string, string> = {
+    lion: '🦁', eagle: '🦅', wolf: '🐺', dragon: '🐉', shark: '🦈', tiger: '🐯',
+    bull: '🐂', falcon: '🦅', panther: '🐆', gorilla: '🦍', cobra: '🐍', rhino: '🦏',
   };
 
   return (
@@ -175,24 +218,7 @@ export function Admin() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">
-                      {p.avatar_url
-                        ? (
-                            {
-                              lion: '🦁',
-                              eagle: '🦅',
-                              wolf: '🐺',
-                              dragon: '🐉',
-                              shark: '🦈',
-                              tiger: '🐯',
-                              bull: '🐂',
-                              falcon: '🦅',
-                              panther: '🐆',
-                              gorilla: '🦍',
-                              cobra: '🐍',
-                              rhino: '🦏',
-                            } as Record<string, string>
-                          )[p.avatar_url] || '👤'
-                        : '👤'}
+                      {(p.avatar_url && AVATARS[p.avatar_url]) || '👤'}
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-chalk">{p.username}</p>
@@ -203,9 +229,7 @@ export function Admin() {
                     <button
                       type="button"
                       onClick={async () => {
-                        await apiFetch(`/api/admin/applications/${p.id}/approve`, {
-                          method: 'POST',
-                        });
+                        await apiFetch(`/api/admin/applications/${p.id}/approve`, { method: 'POST' });
                         fetchPlayers();
                       }}
                       className="rounded-lg bg-grass/15 px-4 py-2 text-xs font-bold text-grass hover:bg-grass/25 transition-all"
@@ -215,9 +239,7 @@ export function Admin() {
                     <button
                       type="button"
                       onClick={async () => {
-                        await apiFetch(`/api/admin/applications/${p.id}/reject`, {
-                          method: 'POST',
-                        });
+                        await apiFetch(`/api/admin/applications/${p.id}/reject`, { method: 'POST' });
                         fetchPlayers();
                       }}
                       className="rounded-lg bg-red-card/15 px-4 py-2 text-xs font-bold text-red-card hover:bg-red-card/25 transition-all"
@@ -232,7 +254,7 @@ export function Admin() {
       )}
 
       {message && (
-        <div className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm">
+        <div className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-chalk">
           {message}
           <button
             type="button"
@@ -245,37 +267,38 @@ export function Admin() {
       )}
 
       {/* Tournament Setup */}
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Turnuva Yönetimi</h2>
+      <div className="card">
+        <h2 className="mb-4 font-display text-xl tracking-wide text-chalk">Turnuva Yönetimi</h2>
 
-        {/* Player selection */}
         <div className="mb-6">
-          <h3 className="mb-2 text-sm text-neutral-400">
+          <h3 className="mb-2 text-sm text-chalk-muted">
             Oyuncular ({players.length}) — Fikstür için seçin:
           </h3>
-          <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-neutral-800 p-3">
+          <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-border p-3">
             {players.map((p) => (
               <label
                 key={p.id}
-                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-neutral-800"
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-surface transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={selectedPlayers.has(p.id)}
                   onChange={() => togglePlayer(p.id)}
-                  className="rounded"
+                  className="rounded accent-gold"
                 />
-                <span className="text-sm">{p.username}</span>
-                {p.selected_team && <span className="text-xs text-accent">{p.selected_team}</span>}
+                <span className="text-sm text-chalk">{p.username}</span>
+                {p.selected_team && (
+                  <span className="text-xs text-gold">({p.selected_team})</span>
+                )}
                 {p.is_admin && (
-                  <span className="rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] text-amber-400">
+                  <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[10px] text-gold font-medium">
                     ADMIN
                   </span>
                 )}
               </label>
             ))}
             {players.length === 0 && (
-              <p className="text-sm text-neutral-500">Henüz kayıtlı oyuncu yok</p>
+              <p className="text-sm text-chalk-muted">Henüz kayıtlı oyuncu yok</p>
             )}
           </div>
         </div>
@@ -285,43 +308,47 @@ export function Admin() {
             type="button"
             onClick={generateFixtures}
             disabled={selectedPlayers.size < 2}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black disabled:opacity-50"
+            className="rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-black hover:bg-gold/90 disabled:opacity-40 transition-all"
           >
-            Fikstür Oluştur ({selectedPlayers.size} oyuncu)
+            ⚽ Fikstür Oluştur ({selectedPlayers.size} oyuncu)
           </button>
           <button
             type="button"
             onClick={generatePlayoffs}
-            className="rounded-lg border border-accent px-4 py-2 text-sm font-bold text-accent hover:bg-accent/10"
+            className="rounded-lg border border-gold px-4 py-2.5 text-sm font-bold text-gold hover:bg-gold/10 transition-all"
           >
-            Playoff Oluştur
+            🏆 Playoff Oluştur
           </button>
         </div>
       </div>
 
       {/* Match list */}
       {matches.length > 0 && (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-          <h2 className="mb-4 text-lg font-semibold">Maç Listesi</h2>
+        <div className="card">
+          <h2 className="mb-4 font-display text-xl tracking-wide text-chalk">Maç Listesi</h2>
           <div className="max-h-64 space-y-1 overflow-y-auto">
             {matches.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center justify-between rounded border border-neutral-800 px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface/50 transition-colors"
               >
-                <span className="text-neutral-500 w-16">
-                  {m.stage === 'LEAGUE' ? `R${m.round_number}` : 'PLAYOFF'}
+                <span className="text-chalk-muted w-16 font-mono text-xs">
+                  {m.stage === 'LEAGUE' ? `R${m.round_number}` : 'PO'}
                 </span>
-                <span className="flex-1 text-right">{m.home_player_id.slice(0, 8)}</span>
-                <span className="mx-3 font-bold tabular-nums">
-                  {m.is_played ? `${m.home_score}-${m.away_score}` : 'vs'}
+                <span className="flex-1 text-right text-chalk font-medium">
+                  {playerName(m.home_player_id)}
                 </span>
-                <span className="flex-1">{m.away_player_id.slice(0, 8)}</span>
+                <span className="mx-4 font-mono font-bold tabular-nums text-gold">
+                  {m.is_played ? `${m.home_score} - ${m.away_score}` : 'vs'}
+                </span>
+                <span className="flex-1 text-chalk font-medium">
+                  {playerName(m.away_player_id)}
+                </span>
                 <span className="w-20 text-right">
                   {m.is_played ? (
-                    <span className="text-green-400">Oynandı</span>
+                    <span className="text-grass text-xs">✓ Oynandı</span>
                   ) : (
-                    <span className="text-neutral-500">Bekliyor</span>
+                    <span className="text-chalk-muted text-xs">Bekliyor</span>
                   )}
                 </span>
                 <button
@@ -330,7 +357,7 @@ export function Admin() {
                     setMatchId(m.id);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="ml-2 rounded bg-neutral-800 px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200"
+                  className="ml-3 rounded-lg bg-surface px-3 py-1.5 text-xs text-chalk-muted hover:text-chalk hover:bg-border-light transition-all"
                 >
                   Seç
                 </button>
@@ -342,111 +369,228 @@ export function Admin() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Score Input */}
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-          <h2 className="mb-4 text-lg font-semibold">Skor Girişi</h2>
-          <div className="space-y-3">
+        <div className="card">
+          <h2 className="mb-4 font-display text-xl tracking-wide text-chalk">Skor Girişi</h2>
+          <div className="space-y-4">
             <select
               value={matchId}
               onChange={(e) => setMatchId(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-chalk"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-chalk focus:border-gold focus:outline-none"
             >
               <option value="">Maç seç...</option>
               {matches.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.stage === 'LEAGUE' ? `R${m.round_number}` : 'Playoff'} —{' '}
-                  {m.home_player_id.slice(0, 8)} vs {m.away_player_id.slice(0, 8)}{' '}
-                  {m.is_played ? '✓' : ''}
+                  {playerName(m.home_player_id)} vs {playerName(m.away_player_id)}
+                  {m.is_played ? ' ✓' : ''}
                 </option>
               ))}
             </select>
-            <div className="flex gap-3">
-              <input
-                type="number"
-                min={0}
-                value={homeScore}
-                onChange={(e) => setHomeScore(Number(e.target.value))}
-                className="w-20 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-              />
-              <span className="flex items-center text-neutral-400">—</span>
-              <input
-                type="number"
-                min={0}
-                value={awayScore}
-                onChange={(e) => setAwayScore(Number(e.target.value))}
-                className="w-20 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-              />
+
+            <div className="flex items-center gap-4">
+              <div className="flex-1 text-right">
+                <p className="text-xs text-chalk-muted mb-1">Ev Sahibi</p>
+                <p className="text-sm font-semibold text-chalk">
+                  {matchId ? playerName(players.find((p) => p.id === matches.find((m) => m.id === matchId)?.home_player_id)?.id || '') : '-'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={homeScore}
+                  onChange={(e) => setHomeScore(Number(e.target.value))}
+                  className="w-16 rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm text-chalk focus:border-gold focus:outline-none"
+                />
+                <span className="text-chalk-muted font-bold">—</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={awayScore}
+                  onChange={(e) => setAwayScore(Number(e.target.value))}
+                  className="w-16 rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm text-chalk focus:border-gold focus:outline-none"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-chalk-muted mb-1">Deplasman</p>
+                <p className="text-sm font-semibold text-chalk">
+                  {matchId ? playerName(players.find((p) => p.id === matches.find((m) => m.id === matchId)?.away_player_id)?.id || '') : '-'}
+                </p>
+              </div>
             </div>
+
+            {/* Red Cards */}
+            <div className="rounded-lg border border-red-card/20 bg-red-card/5 p-3 space-y-2">
+              <p className="text-xs font-semibold text-red-card flex items-center gap-1">
+                🟥 Kırmızı Kartlar
+              </p>
+              {redCards.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {redCards.map((rc, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 rounded-full bg-red-card/20 px-3 py-1 text-xs text-red-card"
+                    >
+                      {rc.playerName}
+                      <button
+                        type="button"
+                        onClick={() => removeRedCard(i)}
+                        className="ml-1 hover:text-red-300"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Futbolcu adı..."
+                  value={redName}
+                  onChange={(e) => setRedName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addRedCard()}
+                  className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-chalk focus:border-red-card focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={addRedCard}
+                  className="rounded-lg bg-red-card/20 px-3 py-1.5 text-xs font-bold text-red-card hover:bg-red-card/30 transition-all"
+                >
+                  Ekle
+                </button>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={submitScore}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black"
+                disabled={!matchId}
+                className="rounded-lg bg-grass px-4 py-2.5 text-sm font-bold text-white hover:bg-grass/90 disabled:opacity-40 transition-all"
               >
-                Skoru Kaydet
+                ✓ Skoru Kaydet
               </button>
               <button
                 type="button"
                 onClick={submitForfeit}
-                className="rounded-lg border border-red-800 px-4 py-2 text-sm font-bold text-red-400 hover:bg-red-900/20"
+                disabled={!matchId}
+                className="rounded-lg border border-red-card px-4 py-2.5 text-sm font-bold text-red-card hover:bg-red-card/10 disabled:opacity-40 transition-all"
               >
-                Hükmen 3-0
+                🚫 Hükmen 3-0
               </button>
             </div>
           </div>
         </div>
 
         {/* Odds Input */}
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-          <h2 className="mb-4 text-lg font-semibold">Oran Girişi</h2>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Match ID"
+        <div className="card">
+          <h2 className="mb-4 font-display text-xl tracking-wide text-chalk">Oran Girişi</h2>
+          <div className="space-y-4">
+            <select
               value={oddsMatchId}
               onChange={(e) => setOddsMatchId(e.target.value)}
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-            />
-            <div className="flex gap-3">
-              <input
-                type="number"
-                step={0.01}
-                value={oddsHome}
-                onChange={(e) => setOddsHome(Number(e.target.value))}
-                className="w-20 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-              />
-              <input
-                type="number"
-                step={0.01}
-                value={oddsDraw}
-                onChange={(e) => setOddsDraw(Number(e.target.value))}
-                className="w-20 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-              />
-              <input
-                type="number"
-                step={0.01}
-                value={oddsAway}
-                onChange={(e) => setOddsAway(Number(e.target.value))}
-                className="w-20 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-              />
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-chalk focus:border-gold focus:outline-none"
+            >
+              <option value="">Maç seç...</option>
+              {matches
+                .filter((m) => !m.is_played)
+                .map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.stage === 'LEAGUE' ? `R${m.round_number}` : 'Playoff'} —{' '}
+                    {playerName(m.home_player_id)} vs {playerName(m.away_player_id)}
+                  </option>
+                ))}
+            </select>
+
+            {/* 1X2 odds */}
+            <div>
+              <p className="text-xs text-chalk-muted mb-2 font-semibold">Maç Sonucu (1-X-2)</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] text-chalk-muted block mb-0.5">Ev Sahibi (1)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={1.01}
+                    value={oddsHome}
+                    onChange={(e) => setOddsHome(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-chalk focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-chalk-muted block mb-0.5">Beraberlik (X)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={1.01}
+                    value={oddsDraw}
+                    onChange={(e) => setOddsDraw(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-chalk focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-chalk-muted block mb-0.5">Deplasman (2)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={1.01}
+                    value={oddsAway}
+                    onChange={(e) => setOddsAway(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-chalk focus:border-gold focus:outline-none"
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Over/Under odds */}
+            <div>
+              <p className="text-xs text-chalk-muted mb-2 font-semibold">Gol Sayısı (Alt/Üst 2.5)</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-chalk-muted block mb-0.5">Alt 2.5</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={1.01}
+                    value={oddsUnder}
+                    onChange={(e) => setOddsUnder(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-chalk focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-chalk-muted block mb-0.5">Üst 2.5</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={1.01}
+                    value={oddsOver}
+                    onChange={(e) => setOddsOver(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-chalk focus:border-gold focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={submitOdds}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black"
+              disabled={!oddsMatchId}
+              className="w-full rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-black hover:bg-gold/90 disabled:opacity-40 transition-all"
             >
-              Oranları Kaydet
+              💰 Oranları Kaydet
             </button>
           </div>
         </div>
 
         {/* Promote admin */}
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-          <h2 className="mb-4 text-lg font-semibold">Admin Yetkisi Ver</h2>
+        <div className="card">
+          <h2 className="mb-4 font-display text-xl tracking-wide text-chalk">Admin Yetkisi Ver</h2>
           <div className="space-y-3">
             <select
               value={promoteId}
               onChange={(e) => setPromoteId(e.target.value)}
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-chalk focus:border-gold focus:outline-none"
             >
               <option value="">Oyuncu seçin...</option>
               {players
@@ -461,9 +605,9 @@ export function Admin() {
               type="button"
               onClick={promoteAdmin}
               disabled={!promoteId}
-              className="rounded-lg border border-amber-600 px-4 py-2 text-sm font-bold text-amber-400 hover:bg-amber-900/20 disabled:opacity-50"
+              className="w-full rounded-lg border border-gold px-4 py-2.5 text-sm font-bold text-gold hover:bg-gold/10 disabled:opacity-40 transition-all"
             >
-              Admin Yap
+              ⭐ Admin Yap
             </button>
           </div>
         </div>

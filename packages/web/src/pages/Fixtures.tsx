@@ -73,10 +73,10 @@ function MatchCard({ match, players }: { match: Match; players: Map<string, Play
               )}
             >
               {home?.username || match.home_player_id.slice(0, 8)}
+              {home?.selected_team && (
+                <span className="text-chalk-muted ml-1">({home.selected_team})</span>
+              )}
             </p>
-            {home?.selected_team && (
-              <p className="text-xs text-chalk-muted truncate">{home.selected_team}</p>
-            )}
           </div>
           <span className="text-xl flex-shrink-0">{homeAvatar}</span>
         </div>
@@ -119,10 +119,10 @@ function MatchCard({ match, players }: { match: Match; players: Map<string, Play
               )}
             >
               {away?.username || match.away_player_id.slice(0, 8)}
+              {away?.selected_team && (
+                <span className="text-chalk-muted ml-1">({away.selected_team})</span>
+              )}
             </p>
-            {away?.selected_team && (
-              <p className="text-xs text-chalk-muted truncate">{away.selected_team}</p>
-            )}
           </div>
         </div>
       </div>
@@ -142,12 +142,14 @@ export function Fixtures() {
   useEffect(() => {
     apiFetch<Player[]>('/api/players')
       .then((data) => {
+        console.log('[Fixtures] Players fetched:', data.length);
         const map = new Map<string, Player>();
         for (const p of data) map.set(p.id, p);
+        console.log('[Fixtures] Map size:', map.size);
         setPlayers(map);
       })
       .catch((err) => {
-        console.error('Failed to fetch players:', err);
+        console.error('[Fixtures] Failed to fetch players:', err);
       })
       .finally(() => setLoading(false));
   }, []);

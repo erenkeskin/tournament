@@ -168,7 +168,7 @@ adminRoutes.get('/teams/wheel', async (c) => {
 adminRoutes.post('/odds', async (c) => {
   const supabase = getSupabaseClient();
   const body = await c.req.json();
-  const { matchId, oddsHome, oddsDraw, oddsAway } = body;
+  const { matchId, oddsHome, oddsDraw, oddsAway, oddsUnder, oddsOver } = body;
 
   const { data, error } = await supabase
     .from('odds')
@@ -177,6 +177,8 @@ adminRoutes.post('/odds', async (c) => {
       odds_home: oddsHome,
       odds_draw: oddsDraw,
       odds_away: oddsAway,
+	      odds_under: oddsUnder ?? null,
+	      odds_over: oddsOver ?? null,
     })
     .select()
     .single();
