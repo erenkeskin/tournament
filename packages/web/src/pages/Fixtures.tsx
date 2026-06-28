@@ -1,5 +1,6 @@
-import { ChevronDown, Flag, Trophy } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Download, Flag, Trophy } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
 import { apiFetch } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { type Match, useMatchStore } from '@/stores/matches';
@@ -134,6 +135,26 @@ export function Fixtures() {
   const { matches, fetchMatches } = useMatchStore();
   const [players, setPlayers] = useState<Map<string, Player>>(new Map());
   const [loading, setLoading] = useState(true);
+  const captureRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!captureRef.current) return;
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(captureRef.current, {
+        backgroundColor: '#0a0a0b',
+        scale: 2,
+      });
+      const link = document.createElement('a');
+      link.download = 'fikstur.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error('Download failed:', e);
+    }
+    setDownloading(false);
+  };
 
   useEffect(() => {
     fetchMatches();
@@ -185,7 +206,19 @@ export function Fixtures() {
         <p className="mt-2 text-sm text-chalk-muted">
           {matches.length} maç · {leagueRounds.length} round · {playoffMatches.length} playoff
         </p>
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg border border-gold/40 bg-surface px-4 py-2 text-sm font-medium text-gold hover:bg-gold/10 disabled:opacity-50 transition-all"
+        >
+          <Download className="h-4 w-4" />
+          {downloading ? 'İndiriliyor...' : 'Fikstürü PNG İndir'}
+        </button>
       </div>
+
+      {/* Printable content */}
+      <div ref={captureRef}>
 
       {/* League rounds */}
       {leagueRounds.map(([round, roundMatches]) => (
@@ -237,6 +270,7 @@ export function Fixtures() {
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 }
