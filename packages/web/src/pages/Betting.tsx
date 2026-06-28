@@ -98,12 +98,7 @@ export function Betting() {
 
   const getOdds = (matchId: string): OddsRow => {
     const o = oddsData[matchId];
-    return o || { odds_home: 2.0, odds_draw: 3.5, odds_away: 4.0, odds_under: null, odds_over: null };
-  };
-
-  const hasUnderOver = (matchId: string) => {
-    const o = getOdds(matchId);
-    return o.odds_under !== null && o.odds_over !== null;
+    return o || { odds_home: 2.0, odds_draw: 3.5, odds_away: 4.0, odds_under: 1.85, odds_over: 1.95 };
   };
 
   const handlePlaceBet = async () => {
@@ -209,7 +204,6 @@ export function Betting() {
             const home = getPlayer(m.home_player_id);
             const away = getPlayer(m.away_player_id);
             const odds = getOdds(m.id);
-            const showUnderOver = hasUnderOver(m.id);
 
             return (
               <div key={m.id} className="card group">
@@ -260,29 +254,27 @@ export function Betting() {
                 </div>
 
                 {/* Under/Over Odds */}
-                {showUnderOver && (
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {(['UNDER', 'OVER'] as const).map((type) => {
-                      const key = `odds_${type.toLowerCase()}` as keyof OddsRow;
-                      const val = odds[key] as number;
-                      return (
-                        <button
-                          type="button"
-                          key={type}
-                          onClick={() => openSlip(m.id, type, val)}
-                          className="rounded-xl border border-border/60 bg-surface/50 px-2 py-2 text-center transition-all hover:border-gold/30 hover:bg-gold/5 active:scale-[0.98]"
-                        >
-                          <span className="block text-[10px] font-medium text-chalk-muted mb-0.5">
-                            {BET_LABELS[type]}
-                          </span>
-                          <span className="block font-mono text-sm font-bold text-chalk tabular-nums">
-                            {val.toFixed(2)}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(['UNDER', 'OVER'] as const).map((type) => {
+                    const key = `odds_${type.toLowerCase()}` as keyof OddsRow;
+                    const val = odds[key] as number;
+                    return (
+                      <button
+                        type="button"
+                        key={type}
+                        onClick={() => openSlip(m.id, type, val)}
+                        className="rounded-xl border border-border/60 bg-surface/50 px-2 py-2 text-center transition-all hover:border-gold/30 hover:bg-gold/5 active:scale-[0.98]"
+                      >
+                        <span className="block text-[10px] font-medium text-chalk-muted mb-0.5">
+                          {BET_LABELS[type]}
+                        </span>
+                        <span className="block font-mono text-sm font-bold text-chalk tabular-nums">
+                          {val.toFixed(2)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
