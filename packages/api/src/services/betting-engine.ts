@@ -23,9 +23,15 @@ export interface SettlementEntry {
 }
 
 export function determineBetResult(betType: BetType, result: MatchResult): 'WON' | 'LOST' {
-  if (result.homeScore > result.awayScore) return betType === 'HOME' ? 'WON' : 'LOST';
-  if (result.homeScore < result.awayScore) return betType === 'AWAY' ? 'WON' : 'LOST';
-  return betType === 'DRAW' ? 'WON' : 'LOST';
+  // 1-X-2
+  if (betType === 'HOME') return result.homeScore > result.awayScore ? 'WON' : 'LOST';
+  if (betType === 'AWAY') return result.awayScore > result.homeScore ? 'WON' : 'LOST';
+  if (betType === 'DRAW') return result.homeScore === result.awayScore ? 'WON' : 'LOST';
+  // Under/Over 2.5
+  const totalGoals = result.homeScore + result.awayScore;
+  if (betType === 'UNDER') return totalGoals < 2.5 ? 'WON' : 'LOST';
+  if (betType === 'OVER') return totalGoals > 2.5 ? 'WON' : 'LOST';
+  return 'LOST';
 }
 
 export function settleBets(bets: Bet[], result: MatchResult): SettlementEntry[] {

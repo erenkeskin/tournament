@@ -38,10 +38,20 @@ betsRoutes.post('/', async (c) => {
 
   const { data: odds } = await supabase.from('odds').select('*').eq('match_id', matchId).single();
 
-  if (!odds) return c.json({ error: 'Odds not available for this match' }, 400);
+  // Use defaults if no odds set
+  const oddsHome = odds?.odds_home ?? 2.0;
+  const oddsDraw = odds?.odds_draw ?? 3.5;
+  const oddsAway = odds?.odds_away ?? 4.0;
+  const oddsUnder = odds?.odds_under ?? 1.85;
+  const oddsOver = odds?.odds_over ?? 1.95;
 
   const oddsValue =
-    betType === 'HOME' ? odds.odds_home : betType === 'DRAW' ? odds.odds_draw : odds.odds_away;
+    betType === 'HOME' ? oddsHome
+    : betType === 'DRAW' ? oddsDraw
+    : betType === 'AWAY' ? oddsAway
+    : betType === 'UNDER' ? oddsUnder
+    : betType === 'OVER' ? oddsOver
+    : 2.0;
   const payout = calculatePayout(amount, oddsValue);
 
   const { data: bet, error: betError } = await supabase

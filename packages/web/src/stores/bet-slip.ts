@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import { apiFetch } from '@/lib/api';
 
+type BetType = 'HOME' | 'DRAW' | 'AWAY' | 'UNDER' | 'OVER';
+
 interface BetSlipState {
   isOpen: boolean;
   matchId: string | null;
-  betType: 'HOME' | 'DRAW' | 'AWAY' | null;
+  betType: BetType | null;
   amount: number;
   potentialPayout: number;
-  openSlip: (matchId: string, betType: 'HOME' | 'DRAW' | 'AWAY', odds: number) => void;
+  openSlip: (matchId: string, betType: BetType, odds: number) => void;
   closeSlip: () => void;
   setAmount: (amount: number, odds: number) => void;
   placeBet: () => Promise<void>;

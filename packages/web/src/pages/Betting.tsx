@@ -1,4 +1,4 @@
-import { Coins, History, TrendingUp, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Coins, History } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
@@ -23,22 +23,27 @@ interface Bet {
   created_at: string;
 }
 
+interface OddsRow {
+  odds_home: number;
+  odds_draw: number;
+  odds_away: number;
+  odds_under: number | null;
+  odds_over: number | null;
+}
+
 const AVATARS: Record<string, string> = {
-  lion: '🦁',
-  eagle: '🦅',
-  wolf: '🐺',
-  dragon: '🐉',
-  shark: '🦈',
-  tiger: '🐯',
-  bull: '🐂',
-  falcon: '🦅',
-  panther: '🐆',
-  gorilla: '🦍',
-  cobra: '🐍',
-  rhino: '🦏',
+  lion: '🦁', eagle: '🦅', wolf: '🐺', dragon: '🐉', shark: '🦈', tiger: '🐯',
+  bull: '🐂', falcon: '🦅', panther: '🐆', gorilla: '🦍', cobra: '🐍', rhino: '🦏',
 };
 
-const BET_LABELS: Record<string, string> = { HOME: 'Ev', DRAW: 'Beraberlik', AWAY: 'Dep' };
+const BET_LABELS: Record<string, string> = {
+  HOME: 'Ev',
+  DRAW: 'Beraberlik',
+  AWAY: 'Dep',
+  UNDER: 'Alt 2.5',
+  OVER: 'Üst 2.5',
+};
+
 const STATUS_STYLE: Record<string, string> = {
   PENDING: 'badge-gold',
   WON: 'badge-green',
@@ -54,9 +59,7 @@ export function Betting() {
   const [balance, setBalance] = useState<number | null>(null);
   const [bets, setBets] = useState<Bet[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [oddsData, setOddsData] = useState<
-    Record<string, { odds_home: number; odds_draw: number; odds_away: number }>
-  >({});
+  const [oddsData, setOddsData] = useState<Record<string, OddsRow>>({});
 
   const fetchBalance = useCallback(() => {
     apiFetch<{ balance: number }>('/api/wallet')
@@ -81,12 +84,9 @@ export function Betting() {
         setPlayers(map);
       })
       .catch(() => {});
-    // Fetch real odds
-    apiFetch<{ match_id: string; odds_home: number; odds_draw: number; odds_away: number }[]>(
-      '/api/matches/odds/all',
-    )
+    apiFetch<(OddsRow & { match_id: string })[]>('/api/matches/odds/all')
       .then((data) => {
-        const map: Record<string, { odds_home: number; odds_draw: number; odds_away: number }> = {};
+        const map: Record<string, OddsRow> = {};
         for (const o of data) map[o.match_id] = o;
         setOddsData(map);
       })
@@ -94,22 +94,35 @@ export function Betting() {
   }, [fetchMatches, fetchBalance, fetchBets]);
 
   const upcoming = matches.filter((m) => !m.is_played);
-  const defaultOdds = { HOME: 2.0, DRAW: 3.5, AWAY: 4.0 };
   const getPlayer = (id: string) => players.get(id);
 
-  const getOdds = (matchId: string) => {
+  const getOdds = (matchId: string): OddsRow => {
     const o = oddsData[matchId];
-    return o ? { HOME: o.odds_home, DRAW: o.odds_draw, AWAY: o.odds_away } : defaultOdds;
+    return o || { odds_home: 2.0, odds_draw: 3.5, odds_away: 4.0, odds_under: null, odds_over: null };
+  };
+
+  const hasUnderOver = (matchId: string) => {
+    const o = getOdds(matchId);
+    return o.odds_under !== null && o.odds_over !== null;
   };
 
   const handlePlaceBet = async () => {
-    await placeBet();
-    fetchBalance();
-    fetchBets();
-    toast.success('Bahis yapıldı!', {
-      description: "Maç sonucu açıklandığında VP'niz güncellenecek.",
-    });
+    try {
+      await placeBet();
+      fetchBalance();
+      fetchBets();
+      toast.success('Bahis yapıldı!', {
+        description: "Maç sonucu açıklandığında VP'niz güncellenecek.",
+      });
+    } catch (e) {
+      toast.error('Bahis başarısız', {
+        description: e instanceof Error ? e.message : 'Bir hata oluştu',
+      });
+    }
   };
+
+  const matchId = useBetSlipStore((s) => s.matchId);
+  const currentOdds = matchId ? getOdds(matchId) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-6 py-12 animate-fade-in">
@@ -120,7 +133,6 @@ export function Betting() {
           <p className="mt-1 text-sm text-chalk-muted">Maçlara iddia oyna, VP kazan</p>
         </div>
         <div className="flex items-center gap-3">
-          {/* VP */}
           <div className="card flex items-center gap-3 !py-2 !px-4">
             <Coins className="h-5 w-5 text-gold" />
             <span className="font-mono text-lg font-bold text-gold tabular-nums">
@@ -128,7 +140,6 @@ export function Betting() {
             </span>
             <span className="text-xs text-chalk-muted">VP</span>
           </div>
-          {/* History toggle */}
           <button
             type="button"
             onClick={() => setShowHistory(!showHistory)}
@@ -166,9 +177,7 @@ export function Betting() {
                     <span className="font-mono text-sm text-chalk-muted">
                       → {b.potential_payout} VP
                     </span>
-                    <span
-                      className={cn('badge text-[11px]', STATUS_STYLE[b.status] || 'badge-muted')}
-                    >
+                    <span className={cn('badge text-[11px]', STATUS_STYLE[b.status] || 'badge-muted')}>
                       {b.status === 'WON'
                         ? 'Kazandı'
                         : b.status === 'LOST'
@@ -188,7 +197,7 @@ export function Betting() {
       {/* Match grid */}
       {upcoming.length === 0 ? (
         <div className="card py-16 text-center">
-          <TrendingUp className="mx-auto mb-4 h-12 w-12 text-chalk-muted/30" />
+          <Coins className="mx-auto mb-4 h-12 w-12 text-chalk-muted/30" />
           <p className="text-lg text-chalk-muted">Bahis yapılabilecek maç yok.</p>
           <p className="mt-1 text-sm text-chalk-muted/60">
             Admin'in fikstür oluşturması ve oran girmesi gerekiyor.
@@ -199,28 +208,30 @@ export function Betting() {
           {upcoming.map((m) => {
             const home = getPlayer(m.home_player_id);
             const away = getPlayer(m.away_player_id);
-            const homeAvatar = home?.avatar_url ? AVATARS[home.avatar_url] || '👤' : '👤';
-            const awayAvatar = away?.avatar_url ? AVATARS[away.avatar_url] || '👤' : '👤';
+            const odds = getOdds(m.id);
+            const showUnderOver = hasUnderOver(m.id);
 
             return (
               <div key={m.id} className="card group">
                 {/* Players */}
                 <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-3 mb-1">
-                    <span className="text-xl">{homeAvatar}</span>
-                    <span className="font-semibold text-chalk">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <span className="text-lg">
+                      {home?.avatar_url ? AVATARS[home.avatar_url] || '👤' : '👤'}
+                    </span>
+                    <span className="font-semibold text-chalk text-sm">
                       {home?.username || m.home_player_id.slice(0, 8)}
                     </span>
                     {home?.selected_team && (
                       <span className="text-xs text-chalk-muted">({home.selected_team})</span>
                     )}
                   </div>
-                  <span className="font-display text-sm tracking-widest text-chalk-muted/50">
-                    VS
-                  </span>
-                  <div className="flex items-center justify-center gap-3 mt-1">
-                    <span className="text-xl">{awayAvatar}</span>
-                    <span className="font-semibold text-chalk">
+                  <span className="font-display text-xs tracking-widest text-chalk-muted/50">VS</span>
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <span className="text-lg">
+                      {away?.avatar_url ? AVATARS[away.avatar_url] || '👤' : '👤'}
+                    </span>
+                    <span className="font-semibold text-chalk text-sm">
                       {away?.username || m.away_player_id.slice(0, 8)}
                     </span>
                     {away?.selected_team && (
@@ -229,24 +240,49 @@ export function Betting() {
                   </div>
                 </div>
 
-                {/* Odds buttons */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* 1-X-2 Odds */}
+                <div className="grid grid-cols-3 gap-1.5 mb-2">
                   {(['HOME', 'DRAW', 'AWAY'] as const).map((type) => (
                     <button
                       type="button"
                       key={type}
-                      onClick={() => openSlip(m.id, type, getOdds(m.id)[type])}
-                      className="group/btn rounded-xl border border-border bg-surface px-3 py-3 text-center transition-all hover:border-gold/40 hover:bg-gold/5 active:scale-[0.98]"
+                      onClick={() => openSlip(m.id, type, odds[`odds_${type.toLowerCase()}` as keyof OddsRow] as number)}
+                      className="rounded-xl border border-border bg-surface px-2 py-2.5 text-center transition-all hover:border-gold/40 hover:bg-gold/5 active:scale-[0.98]"
                     >
-                      <span className="block text-[11px] font-medium text-chalk-muted mb-0.5">
+                      <span className="block text-[10px] font-medium text-chalk-muted mb-0.5">
                         {BET_LABELS[type]}
                       </span>
-                      <span className="block font-mono text-lg font-bold text-gold tabular-nums group-hover/btn:scale-110 transition-transform">
-                        {getOdds(m.id)[type].toFixed(2)}
+                      <span className="block font-mono text-base font-bold text-gold tabular-nums">
+                        {(odds[`odds_${type.toLowerCase()}` as keyof OddsRow] as number).toFixed(2)}
                       </span>
                     </button>
                   ))}
                 </div>
+
+                {/* Under/Over Odds */}
+                {showUnderOver && (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {(['UNDER', 'OVER'] as const).map((type) => {
+                      const key = `odds_${type.toLowerCase()}` as keyof OddsRow;
+                      const val = odds[key] as number;
+                      return (
+                        <button
+                          type="button"
+                          key={type}
+                          onClick={() => openSlip(m.id, type, val)}
+                          className="rounded-xl border border-border/60 bg-surface/50 px-2 py-2 text-center transition-all hover:border-gold/30 hover:bg-gold/5 active:scale-[0.98]"
+                        >
+                          <span className="block text-[10px] font-medium text-chalk-muted mb-0.5">
+                            {BET_LABELS[type]}
+                          </span>
+                          <span className="block font-mono text-sm font-bold text-chalk tabular-nums">
+                            {val.toFixed(2)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -262,7 +298,7 @@ export function Betting() {
             onClick={closeSlip}
             aria-label="Kapat"
           />
-          <div className="fixed inset-y-0 right-0 z-50 w-96 animate-slide-right border-l border-border bg-pitch shadow-2xl">
+          <div className="fixed inset-y-0 right-0 z-50 w-96 animate-slide-right border-l border-border bg-pitch shadow-2xl flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-6 py-5">
               <h3 className="font-display text-xl tracking-wide text-chalk">Bahis Kuponu</h3>
@@ -271,11 +307,11 @@ export function Betting() {
                 onClick={closeSlip}
                 className="rounded-lg p-2 text-chalk-muted hover:bg-surface hover:text-chalk transition-all"
               >
-                <X className="h-5 w-5" />
+                <span className="text-lg">✕</span>
               </button>
             </div>
 
-            <div className="space-y-5 p-6">
+            <div className="flex-1 space-y-5 p-6 overflow-y-auto">
               {/* Selection */}
               <div className="rounded-2xl border border-border bg-surface p-5">
                 <p className="text-xs text-chalk-muted mb-3 uppercase tracking-wider">Seçimin</p>
@@ -283,11 +319,9 @@ export function Betting() {
                   <span className="font-mono text-sm font-bold text-gold">
                     {BET_LABELS[betType || 'HOME']}
                   </span>
-                  {betType && (
+                  {betType && currentOdds && (
                     <span className="font-mono text-sm text-chalk">
-                      {getOdds(useBetSlipStore.getState().matchId || '')[betType || 'HOME'].toFixed(
-                        2,
-                      )}
+                      {(currentOdds[`odds_${betType.toLowerCase()}` as keyof OddsRow] as number)?.toFixed(2) || '—'}
                     </span>
                   )}
                 </div>
@@ -305,11 +339,12 @@ export function Betting() {
                     max={balance || 0}
                     value={amount || ''}
                     onChange={(e) => {
-                      const bType = useBetSlipStore.getState().betType;
-                      setAmount(
-                        Number(e.target.value),
-                        getOdds(useBetSlipStore.getState().matchId || '')[bType || 'HOME'],
-                      );
+                      const bt = useBetSlipStore.getState().betType;
+                      const mid = useBetSlipStore.getState().matchId;
+                      if (!bt || !mid) return;
+                      const ods = getOdds(mid);
+                      const oddVal = ods[`odds_${bt.toLowerCase()}` as keyof OddsRow] as number;
+                      setAmount(Number(e.target.value), oddVal);
                     }}
                     className="input !text-lg !font-mono !py-3 text-center"
                     placeholder="0"
@@ -332,11 +367,12 @@ export function Betting() {
                     key={v}
                     disabled={(balance || 0) < v}
                     onClick={() => {
-                      const bType = useBetSlipStore.getState().betType;
-                      setAmount(
-                        v,
-                        getOdds(useBetSlipStore.getState().matchId || '')[bType || 'HOME'],
-                      );
+                      const bt = useBetSlipStore.getState().betType;
+                      const mid = useBetSlipStore.getState().matchId;
+                      if (!bt || !mid) return;
+                      const ods = getOdds(mid);
+                      const oddVal = ods[`odds_${bt.toLowerCase()}` as keyof OddsRow] as number;
+                      setAmount(v, oddVal);
                     }}
                     className="rounded-lg border border-border bg-surface px-2 py-2 text-xs font-mono text-chalk-muted hover:border-gold/30 hover:text-gold transition-all disabled:opacity-30"
                   >

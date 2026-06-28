@@ -55,7 +55,7 @@ export interface Odds {
   updated_at: string;
 }
 
-export type BetType = 'HOME' | 'DRAW' | 'AWAY';
+export type BetType = 'HOME' | 'DRAW' | 'AWAY' | 'UNDER' | 'OVER';
 export type BetStatus = 'PENDING' | 'WON' | 'LOST' | 'VOID';
 
 export interface Bet {
