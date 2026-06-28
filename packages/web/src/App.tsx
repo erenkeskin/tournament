@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { Admin } from './pages/Admin';
+import { AdminBets } from './pages/AdminBets';
 import { Apply } from './pages/Apply';
 import { Betting } from './pages/Betting';
 import { Dashboard } from './pages/Dashboard';
@@ -71,6 +72,7 @@ function AppContent() {
       <Route element={<Layout />}>
         <Route path="draw" element={<LiveDraw />} />
         <Route path="admin" element={<Admin />} />
+        <Route path="admin/bets" element={<AdminBets />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

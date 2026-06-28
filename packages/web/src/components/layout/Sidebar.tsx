@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth';
 const links = [
   { to: '/draw', icon: Radio, label: 'Kader Çarkı' },
   { to: '/admin', icon: ShieldAlert, label: 'Admin Paneli' },
-  { to: '/admin#bets', icon: Coins, label: 'Bahis Takip' },
+  { to: '/admin/bets', icon: Coins, label: 'Bahis Takip' },
 ];
 
 export function Sidebar() {

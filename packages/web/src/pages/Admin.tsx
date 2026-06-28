@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 interface Player {
   id: string;
@@ -51,25 +50,6 @@ export function Admin() {
   const [message, setMessage] = useState('');
   const [promoteId, setPromoteId] = useState('');
 
-  // Bet monitoring
-  interface AdminBet {
-    id: string;
-    profile_id: string;
-    username: string;
-    match_id: string;
-    bet_type: string;
-    amount: number;
-    potential_payout: number;
-    status: string;
-    created_at: string;
-  }
-  const [adminBets, setAdminBets] = useState<AdminBet[]>([]);
-
-  const fetchAdminBets = useCallback(async () => {
-    const data = await apiFetch<AdminBet[]>('/api/admin/bets');
-    setAdminBets(data);
-  }, []);
-
   const playerMap = new Map(players.map((p) => [p.id, p]));
   const playerName = (id: string) => playerMap.get(id)?.username || id.slice(0, 8);
   const playerTeam = (id: string) => playerMap.get(id)?.selected_team || null;
@@ -87,8 +67,7 @@ export function Admin() {
   useEffect(() => {
     fetchPlayers();
     fetchMatches();
-    fetchAdminBets();
-  }, [fetchPlayers, fetchMatches, fetchAdminBets]);
+  }, [fetchPlayers, fetchMatches]);
 
   const togglePlayer = (id: string) => {
     setSelectedPlayers((prev) => {
@@ -649,73 +628,6 @@ export function Admin() {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Bet Monitoring */}
-      <div id="bets">
-      {adminBets.length > 0 && (
-        <div className="card">
-          <h2 className="mb-4 font-display text-xl tracking-wide text-chalk">Bahis Takip</h2>
-
-          {/* Player winnings summary */}
-          {(() => {
-            const winnings = new Map<string, { username: string; won: number; lost: number; net: number }>();
-            for (const b of adminBets) {
-              if (!winnings.has(b.profile_id)) {
-                winnings.set(b.profile_id, { username: b.username, won: 0, lost: 0, net: 0 });
-              }
-              const w = winnings.get(b.profile_id)!;
-              if (b.status === 'WON') w.won += b.potential_payout - b.amount;
-              else if (b.status === 'LOST') w.lost += b.amount;
-            }
-            const entries = Array.from(winnings.values()).map((w) => ({ ...w, net: w.won - w.lost }));
-            entries.sort((a, b) => b.net - a.net);
-
-            return entries.length > 0 ? (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-chalk-muted mb-3">Oyuncu Kazanç/Kayıp</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {entries.map((e) => (
-                    <div key={e.username} className="rounded-xl border border-border bg-surface/50 px-4 py-3 text-center">
-                      <p className="text-sm font-semibold text-chalk">{e.username}</p>
-                      <p className="text-xs text-chalk-muted mt-1">
-                        <span className="text-grass">+{e.won.toFixed(0)}</span>
-                        {' / '}
-                        <span className="text-red-card">-{e.lost.toFixed(0)}</span>
-                      </p>
-                      <p className={cn('font-mono text-sm font-bold mt-0.5', e.net >= 0 ? 'text-grass' : 'text-red-card')}>
-                        {e.net >= 0 ? '+' : ''}{e.net.toFixed(0)} VP
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null;
-          })()}
-
-          {/* Bet list */}
-          <div className="max-h-96 overflow-y-auto space-y-1.5">
-            {adminBets.map((b) => {
-              const betLabel = { HOME: 'Ev', DRAW: 'X', AWAY: 'Dep', UNDER: 'Alt', OVER: 'Üst' }[b.bet_type] || b.bet_type;
-              const statusStyle = b.status === 'WON' ? 'badge-green' : b.status === 'LOST' ? 'badge-red' : b.status === 'VOID' ? 'badge-muted' : 'badge-gold';
-              return (
-                <div key={b.id} className="flex items-center justify-between rounded-lg border border-border bg-surface/30 px-3 py-2 text-xs">
-                  <span className="font-medium text-chalk w-20 truncate">{b.username}</span>
-                  <span className="text-gold font-mono w-10 text-center">{betLabel}</span>
-                  <span className="text-chalk-muted font-mono w-14 text-right">{b.amount} VP</span>
-                  <span className="text-chalk-muted font-mono w-14 text-right">→ {b.potential_payout} VP</span>
-                  <span className={cn('badge text-[10px] w-16 text-center', statusStyle)}>
-                    {b.status === 'WON' ? 'Kazandı' : b.status === 'LOST' ? 'Kaybetti' : b.status === 'VOID' ? 'İade' : 'Bekliyor'}
-                  </span>
-                  <span className="text-chalk-muted/50 text-[10px] w-16 text-right">
-                    {new Date(b.created_at).toLocaleDateString('tr-TR')}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
       </div>
     </div>
   );
