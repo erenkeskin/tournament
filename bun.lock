@@ -6,6 +6,7 @@
       "name": "vig-fifa-tournament",
       "devDependencies": {
         "@biomejs/biome": "^2.5.0",
+        "@supabase/supabase-js": "^2.108.2",
       },
     },
     "packages/api": {
