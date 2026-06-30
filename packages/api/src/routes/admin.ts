@@ -188,7 +188,6 @@ adminRoutes.post('/odds', async (c) => {
 	  if (error) return c.json({ error: error.message, code: error.code }, 500);
 	  return c.json(data, 201);
 	});
-});
 
 // Audit log
 adminRoutes.get('/audit', async (c) => {
