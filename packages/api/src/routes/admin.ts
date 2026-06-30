@@ -166,25 +166,28 @@ adminRoutes.get('/teams/wheel', async (c) => {
 
 // Set odds
 adminRoutes.post('/odds', async (c) => {
-  const supabase = getSupabaseClient();
-  const body = await c.req.json();
-  const { matchId, oddsHome, oddsDraw, oddsAway, oddsUnder, oddsOver } = body;
+	  const supabase = getSupabaseClient();
+	  const body = await c.req.json();
+	  const { matchId, oddsHome, oddsDraw, oddsAway, oddsUnder, oddsOver } = body;
 
-  const { data, error } = await supabase
-    .from('odds')
-    .upsert({
-      match_id: matchId,
-      odds_home: oddsHome,
-      odds_draw: oddsDraw,
-      odds_away: oddsAway,
-	      odds_under: oddsUnder ?? null,
-	      odds_over: oddsOver ?? null,
-    })
-    .select()
-    .single();
+	  const upsertData: Record<string, unknown> = {
+	    match_id: matchId,
+	    odds_home: oddsHome,
+	    odds_draw: oddsDraw,
+	    odds_away: oddsAway,
+	  };
+	  if (oddsUnder !== undefined) upsertData.odds_under = oddsUnder;
+	  if (oddsOver !== undefined) upsertData.odds_over = oddsOver;
 
-  if (error) return c.json({ error: error.message }, 500);
-  return c.json(data, 201);
+	  const { data, error } = await supabase
+	    .from('odds')
+	    .upsert(upsertData)
+	    .select()
+	    .single();
+
+	  if (error) return c.json({ error: error.message, code: error.code }, 500);
+	  return c.json(data, 201);
+	});
 });
 
 // Audit log
