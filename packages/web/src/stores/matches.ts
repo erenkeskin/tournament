@@ -24,6 +24,7 @@ export interface Match {
   away_score: number | null;
   is_played: boolean;
   is_forfeit: boolean;
+  betting_locked: boolean;
   round_number: number | null;
   playoff_metadata: unknown;
 }

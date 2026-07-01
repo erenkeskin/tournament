@@ -18,6 +18,7 @@ interface Match {
   home_player_id: string;
   away_player_id: string;
   is_played: boolean;
+  betting_locked: boolean;
   home_score: number | null;
   away_score: number | null;
 }
@@ -175,6 +176,20 @@ export function Admin() {
       const msg = e instanceof Error ? e.message : 'Hata';
       setMessage(msg);
       toast.error('İşlem başarısız', { description: msg });
+    }
+  };
+
+  const lockBetting = async (id: string, locked: boolean) => {
+    try {
+      await apiFetch(`/api/admin/matches/${id}/lock-betting`, {
+        method: 'POST',
+        body: JSON.stringify({ locked }),
+      });
+      toast.success(locked ? 'Bahis kapatıldı' : 'Bahis açıldı');
+      fetchMatches();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Hata';
+      toast.error('Hata', { description: msg });
     }
   };
 
@@ -397,10 +412,25 @@ export function Admin() {
                 <span className="w-20 text-right">
                   {m.is_played ? (
                     <span className="text-grass text-xs">✓ Oynandı</span>
+                  ) : m.betting_locked ? (
+                    <span className="text-amber-400 text-xs">🔒 Canlı</span>
                   ) : (
                     <span className="text-chalk-muted text-xs">Bekliyor</span>
                   )}
                 </span>
+                {!m.is_played && (
+                  <button
+                    type="button"
+                    onClick={() => lockBetting(m.id, !m.betting_locked)}
+                    className={`ml-2 rounded-lg px-2 py-1 text-xs font-medium transition-all ${
+                      m.betting_locked
+                        ? 'text-grass border border-grass/30 hover:bg-grass/10'
+                        : 'text-amber-400 border border-amber-400/30 hover:bg-amber-400/10'
+                    }`}
+                  >
+                    {m.betting_locked ? 'Bahisi Aç' : 'Maç Başladı'}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

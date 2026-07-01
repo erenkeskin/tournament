@@ -93,7 +93,7 @@ export function Betting() {
       .catch(() => {});
   }, [fetchMatches, fetchBalance, fetchBets]);
 
-  const upcoming = matches.filter((m) => !m.is_played);
+  const upcoming = matches.filter((m) => !m.is_played && !m.betting_locked);
   const getPlayer = (id: string) => players.get(id);
 
   const getOdds = (matchId: string): OddsRow => {

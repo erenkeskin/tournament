@@ -357,6 +357,22 @@ adminRoutes.post('/applications/:id/reject', async (c) => {
 	  return c.json(bets);
 	});
 
+// Lock/unlock betting for a match (maç başladı)
+	adminRoutes.post('/matches/:id/lock-betting', async (c) => {
+	  const supabase = getSupabaseClient();
+	  const matchId = c.req.param('id');
+	  const body = await c.req.json();
+	  const { locked } = body;
+
+	  const { error } = await supabase
+	    .from('matches')
+	    .update({ betting_locked: locked })
+	    .eq('id', matchId);
+
+	  if (error) return c.json({ error: error.message }, 500);
+	  return c.json({ success: true, locked });
+	});
+
 // Clear all team assignments
 	adminRoutes.post('/clear-teams', async (c) => {
 	  const supabase = getSupabaseClient();
