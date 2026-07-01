@@ -94,7 +94,9 @@ export function Admin() {
       setMessage(`${result.count} maç oluşturuldu!`);
       fetchMatches();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('İşlem başarısız', { description: msg });
     }
   };
 
@@ -107,7 +109,9 @@ export function Admin() {
       setMessage(`Playoff oluşturuldu! Top 4: ${result.top4.map((p) => p.username).join(', ')}`);
       fetchMatches();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('İşlem başarısız', { description: msg });
     }
   };
 
@@ -129,7 +133,9 @@ export function Admin() {
       setRedName('');
       fetchMatches();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('İşlem başarısız', { description: msg });
     }
   };
 
@@ -141,7 +147,9 @@ export function Admin() {
       setMatchId('');
       fetchMatches();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('Hata', { description: msg });
     }
   };
 
@@ -164,7 +172,9 @@ export function Admin() {
       });
       setOddsMatchId('');
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('İşlem başarısız', { description: msg });
     }
   };
 
@@ -174,7 +184,9 @@ export function Admin() {
       toast.success('Tüm takımlar temizlendi!');
       fetchPlayers();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('İşlem başarısız', { description: msg });
     }
   };
 
@@ -184,7 +196,9 @@ export function Admin() {
       toast.success(`${result.assigned} oyuncuya avatar atandı!`);
       fetchPlayers();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('İşlem başarısız', { description: msg });
     }
   };
 
@@ -199,7 +213,9 @@ export function Admin() {
       setPromoteId('');
       fetchPlayers();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Hata');
+      const msg = e instanceof Error ? e.message : 'Hata';
+      setMessage(msg);
+      toast.error('İşlem başarısız', { description: msg });
     }
   };
 
