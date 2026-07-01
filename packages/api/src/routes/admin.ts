@@ -181,7 +181,7 @@ adminRoutes.post('/odds', async (c) => {
 
 	  const { data, error } = await supabase
 	    .from('odds')
-	    .upsert(upsertData)
+	    .upsert(upsertData, { onConflict: 'match_id' })
 	    .select()
 	    .single();
 
